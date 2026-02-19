@@ -44,6 +44,7 @@ const RedemptionsTable = (redemptionsData) => {
     setShowEdit,
     refresh,
     t,
+    getSubscriptionPlanTitle,
   } = redemptionsData;
 
   // Modal states
@@ -67,6 +68,7 @@ const RedemptionsTable = (redemptionsData) => {
       refresh,
       redemptions,
       activePage,
+      getSubscriptionPlanTitle,
       showDeleteRedemptionModal,
     });
   }, [
@@ -78,6 +80,7 @@ const RedemptionsTable = (redemptionsData) => {
     refresh,
     redemptions,
     activePage,
+    getSubscriptionPlanTitle,
     showDeleteRedemptionModal,
   ]);
 
