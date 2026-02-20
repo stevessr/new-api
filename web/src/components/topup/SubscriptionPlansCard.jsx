@@ -30,7 +30,13 @@ import {
   Tooltip,
   Typography,
 } from '@douyinfe/semi-ui';
-import { API, showError, showSuccess, renderQuota } from '../../helpers';
+import {
+  API,
+  showError,
+  showSuccess,
+  renderQuota,
+  getQuotaPerUnit,
+} from '../../helpers';
 import { getCurrencyConfig } from '../../helpers/render';
 import { RefreshCw, Sparkles } from 'lucide-react';
 import SubscriptionPurchaseModal from './modals/SubscriptionPurchaseModal';
@@ -82,6 +88,8 @@ const SubscriptionPlansCard = ({
   activeSubscriptions = [],
   allSubscriptions = [],
   reloadSubscriptionSelf,
+  refreshUserQuota,
+  userState,
   withCard = true,
 }) => {
   const [open, setOpen] = useState(false);
@@ -107,7 +115,10 @@ const SubscriptionPlansCard = ({
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await reloadSubscriptionSelf?.();
+      await Promise.all([
+        reloadSubscriptionSelf?.(),
+        refreshUserQuota?.(),
+      ]);
     } finally {
       setRefreshing(false);
     }
@@ -190,6 +201,33 @@ const SubscriptionPlansCard = ({
             ? res.data.data
             : res.data?.message || t('支付失败');
         showError(errorMsg);
+      }
+    } catch (e) {
+      showError(t('支付请求失败'));
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const payWallet = async () => {
+    if (!selectedPlan?.plan?.id) {
+      showError(t('参数错误'));
+      return;
+    }
+    setPaying(true);
+    try {
+      const res = await API.post('/api/subscription/wallet/pay', {
+        plan_id: selectedPlan.plan.id,
+      });
+      if (res.data?.success) {
+        showSuccess(t('订阅购买成功'));
+        await Promise.all([
+          reloadSubscriptionSelf?.(),
+          refreshUserQuota?.(),
+        ]);
+        closeBuy();
+      } else {
+        showError(res.data?.message || t('支付失败'));
       }
     } catch (e) {
       showError(t('支付请求失败'));
@@ -665,6 +703,14 @@ const SubscriptionPlansCard = ({
         enableOnlineTopUp={enableOnlineTopUp}
         enableStripeTopUp={enableStripeTopUp}
         enableCreemTopUp={enableCreemTopUp}
+        userQuota={Number(userState?.user?.quota || 0)}
+        requiredWalletQuota={
+          selectedPlan?.plan
+            ? Math.round(
+                Number(selectedPlan.plan.price_amount || 0) * getQuotaPerUnit(),
+              )
+            : 0
+        }
         purchaseLimitInfo={
           selectedPlan?.plan?.id
             ? {
@@ -673,6 +719,7 @@ const SubscriptionPlansCard = ({
               }
             : null
         }
+        onPayWallet={payWallet}
         onPayStripe={payStripe}
         onPayCreem={payCreem}
         onPayEpay={payEpay}

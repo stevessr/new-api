@@ -11,6 +11,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/pkg/cachex"
 	"github.com/samber/hot"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -33,8 +34,11 @@ const (
 )
 
 var (
-	ErrSubscriptionOrderNotFound      = errors.New("subscription order not found")
-	ErrSubscriptionOrderStatusInvalid = errors.New("subscription order status invalid")
+	ErrSubscriptionOrderNotFound         = errors.New("subscription order not found")
+	ErrSubscriptionOrderStatusInvalid    = errors.New("subscription order status invalid")
+	ErrSubscriptionPlanDisabled          = errors.New("subscription plan disabled")
+	ErrSubscriptionWalletInsufficient    = errors.New("subscription wallet insufficient")
+	ErrSubscriptionPurchaseLimitExceeded = errors.New("已达到该套餐购买上限")
 )
 
 func txWithForUpdate(tx *gorm.DB) *gorm.DB {
@@ -217,6 +221,10 @@ type SubscriptionOrder struct {
 
 	ProviderPayload string `json:"provider_payload" gorm:"type:text"`
 }
+
+const (
+	SubscriptionPaymentMethodWallet = "wallet"
+)
 
 func (o *SubscriptionOrder) Insert() error {
 	if o.CreateTime == 0 {
@@ -445,6 +453,104 @@ func downgradeUserGroupForSubscriptionTx(tx *gorm.DB, sub *UserSubscription, now
 	return prevGroup, nil
 }
 
+func calcSubscriptionWalletQuota(plan *SubscriptionPlan) (int64, error) {
+	if plan == nil {
+		return 0, errors.New("invalid plan")
+	}
+	dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
+	dPrice := decimal.NewFromFloat(plan.PriceAmount)
+	required := dPrice.Mul(dQuotaPerUnit).IntPart()
+	if required <= 0 {
+		return 0, errors.New("invalid subscription wallet quota")
+	}
+	return required, nil
+}
+
+func PurchaseSubscriptionWithWallet(userId int, planId int) (string, error) {
+	if userId <= 0 || planId <= 0 {
+		return "", errors.New("invalid userId or planId")
+	}
+
+	now := GetDBTimestamp()
+	var tradeNo string
+	var logPlanTitle string
+	var logMoney float64
+	var logPaymentMethod string
+	var logRequiredQuota int64
+	var upgradeGroup string
+
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		plan, err := getSubscriptionPlanByIdTx(tx, planId)
+		if err != nil {
+			return err
+		}
+		if !plan.Enabled {
+			return ErrSubscriptionPlanDisabled
+		}
+
+		requiredQuota, err := calcSubscriptionWalletQuota(plan)
+		if err != nil {
+			return err
+		}
+
+		updateRes := tx.Model(&User{}).
+			Where("id = ? AND quota >= ?", userId, int(requiredQuota)).
+			Update("quota", gorm.Expr("quota - ?", int(requiredQuota)))
+		if updateRes.Error != nil {
+			return updateRes.Error
+		}
+		if updateRes.RowsAffected == 0 {
+			return ErrSubscriptionWalletInsufficient
+		}
+
+		tradeNo = fmt.Sprintf("SUBWLTUSR%dNO%s", userId, common.GetRandomString(12))
+		order := &SubscriptionOrder{
+			UserId:        userId,
+			PlanId:        plan.Id,
+			Money:         plan.PriceAmount,
+			TradeNo:       tradeNo,
+			PaymentMethod: SubscriptionPaymentMethodWallet,
+			CreateTime:    now,
+			Status:        common.TopUpStatusSuccess,
+			CompleteTime:  now,
+		}
+		if err := tx.Create(order).Error; err != nil {
+			return err
+		}
+
+		_, err = CreateUserSubscriptionFromPlanTx(tx, userId, plan, "wallet")
+		if err != nil {
+			return err
+		}
+
+		if err := upsertSubscriptionTopUpTx(tx, order); err != nil {
+			return err
+		}
+
+		upgradeGroup = strings.TrimSpace(plan.UpgradeGroup)
+		logPlanTitle = plan.Title
+		logMoney = order.Money
+		logPaymentMethod = order.PaymentMethod
+		logRequiredQuota = requiredQuota
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if upgradeGroup != "" {
+		_ = UpdateUserGroupCache(userId, upgradeGroup)
+	}
+	if common.RedisEnabled {
+		if quota, quotaErr := GetUserQuota(userId, true); quotaErr == nil {
+			_ = updateUserQuotaCache(userId, quota)
+		}
+	}
+	msg := fmt.Sprintf("订阅购买成功，套餐: %s，支付金额: %.2f，支付方式: %s，扣减额度: %d", logPlanTitle, logMoney, logPaymentMethod, logRequiredQuota)
+	RecordLog(userId, LogTypeTopup, msg)
+	return tradeNo, nil
+}
+
 func CreateUserSubscriptionFromPlanTx(tx *gorm.DB, userId int, plan *SubscriptionPlan, source string) (*UserSubscription, error) {
 	if tx == nil {
 		return nil, errors.New("tx is nil")
@@ -463,7 +569,7 @@ func CreateUserSubscriptionFromPlanTx(tx *gorm.DB, userId int, plan *Subscriptio
 			return nil, err
 		}
 		if count >= int64(plan.MaxPurchasePerUser) {
-			return nil, errors.New("已达到该套餐购买上限")
+			return nil, ErrSubscriptionPurchaseLimitExceeded
 		}
 	}
 	nowUnix := GetDBTimestamp()
