@@ -96,7 +96,7 @@ const REGION_EXAMPLE = {
 
 // 支持并且已适配通过接口获取模型列表的渠道类型
 const MODEL_FETCHABLE_TYPES = new Set([
-  1, 4, 14, 34, 17, 26, 27, 24, 47, 25, 20, 23, 31, 40, 42, 48, 43,
+  1, 4, 14, 34, 17, 26, 27, 24, 47, 25, 20, 23, 31, 40, 42, 48, 43, 58,
 ]);
 
 function type2secretPrompt(type) {
@@ -1389,11 +1389,11 @@ const EditChannelModal = (props) => {
       delete settings.vertex_key_type;
     }
 
-    // type === 1 (OpenAI) 或 type === 14 (Claude): 设置字段透传控制（显式保存布尔值）
-    if (localInputs.type === 1 || localInputs.type === 14) {
+    // type === 1/58 (OpenAI/OpenAI Responses) 或 type === 14 (Claude): 设置字段透传控制（显式保存布尔值）
+    if (localInputs.type === 1 || localInputs.type === 58 || localInputs.type === 14) {
       settings.allow_service_tier = localInputs.allow_service_tier === true;
-      // 仅 OpenAI 渠道需要 store 和 safety_identifier
-      if (localInputs.type === 1) {
+      // OpenAI 系渠道需要 store 和 safety_identifier
+      if (localInputs.type === 1 || localInputs.type === 58) {
         settings.disable_store = localInputs.disable_store === true;
         settings.allow_safety_identifier =
           localInputs.allow_safety_identifier === true;
@@ -2460,7 +2460,7 @@ const EditChannelModal = (props) => {
                       />
                     )}
 
-                    {inputs.type === 1 && (
+                    {(inputs.type === 1 || inputs.type === 58) && (
                       <Form.Input
                         field='openai_organization'
                         label={t('组织')}
@@ -3218,7 +3218,7 @@ const EditChannelModal = (props) => {
                     />
 
                     {/* 字段透传控制 - OpenAI 渠道 */}
-                    {inputs.type === 1 && (
+                    {(inputs.type === 1 || inputs.type === 58) && (
                       <>
                         <div className='mt-4 mb-2 text-sm font-medium text-gray-700'>
                           {t('字段透传控制')}
@@ -3342,7 +3342,7 @@ const EditChannelModal = (props) => {
                       />
                     )}
 
-                    {inputs.type === 1 && (
+                    {(inputs.type === 1 || inputs.type === 58) && (
                       <Form.Switch
                         field='force_format'
                         label={t('强制格式化')}
