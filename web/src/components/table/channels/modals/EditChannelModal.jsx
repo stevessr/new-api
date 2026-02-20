@@ -129,7 +129,7 @@ const DEPRECATED_DOUBAO_CODING_PLAN_BASE_URL = 'doubao-coding-plan';
 
 // 支持并且已适配通过接口获取模型列表的渠道类型
 const MODEL_FETCHABLE_TYPES = new Set([
-  1, 4, 14, 34, 17, 26, 27, 24, 47, 25, 20, 23, 31, 40, 42, 48, 43,
+  1, 4, 14, 34, 17, 26, 27, 24, 47, 25, 20, 23, 31, 40, 42, 48, 43, 58,
 ]);
 
 function type2secretPrompt(type) {
@@ -146,11 +146,11 @@ function type2secretPrompt(type) {
     case 33:
       return '按照如下格式输入：Ak|Sk|Region';
     case 45:
-      return '请输入渠道对应的鉴权密钥, 豆包语音输入：AppId|AccessToken';
+      return '请输入渠道对应的鉴权密钥，豆包语音输入：AppId|AccessToken';
     case 50:
-      return '按照如下格式输入: AccessKey|SecretKey, 如果上游是New API，则直接输ApiKey';
+      return '按照如下格式输入：AccessKey|SecretKey, 如果上游是 New API，则直接输 ApiKey';
     case 51:
-      return '按照如下格式输入: AccessKey|SecretAccessKey';
+      return '按照如下格式输入：AccessKey|SecretAccessKey';
     case 57:
       return '请输入 JSON 格式的 OAuth 凭据（必须包含 access_token 和 account_id）';
     default:
@@ -318,7 +318,7 @@ const EditChannelModal = (props) => {
     }
     if (!verifyJSON(raw)) {
       return {
-        tagLabel: t('JSON格式错误'),
+        tagLabel: t('JSON 格式错误'),
         tagColor: 'red',
         preview: raw,
       };
@@ -352,7 +352,7 @@ const EditChannelModal = (props) => {
       };
     } catch (error) {
       return {
-        tagLabel: t('JSON格式错误'),
+        tagLabel: t('JSON 格式错误'),
         tagColor: 'red',
         preview: raw,
       };
@@ -372,7 +372,7 @@ const EditChannelModal = (props) => {
     keyData: '',
   });
 
-  // 专门的2FA验证状态（用于TwoFactorAuthModal）
+  // 专门的 2FA 验证状态（用于 TwoFactorAuthModal）
   const [show2FAVerifyModal, setShow2FAVerifyModal] = useState(false);
   const [verifyCode, setVerifyCode] = useState('');
 
@@ -418,7 +418,7 @@ const EditChannelModal = (props) => {
     </Tooltip>
   );
 
-  // 2FA状态更新辅助函数
+  // 2FA 状态更新辅助函数
   const updateTwoFAState = (updates) => {
     setTwoFAState((prev) => ({ ...prev, ...updates }));
   };
@@ -461,7 +461,7 @@ const EditChannelModal = (props) => {
     });
   };
 
-  // 重置2FA验证状态
+  // 重置 2FA 验证状态
   const reset2FAVerifyState = () => {
     setShow2FAVerifyModal(false);
     setVerifyCode('');
@@ -503,10 +503,10 @@ const EditChannelModal = (props) => {
       formApiRef.current.setValue(key, value);
     }
 
-    // 同步更新inputs状态
+    // 同步更新 inputs 状态
     setInputs((prev) => ({ ...prev, [key]: value }));
 
-    // 生成setting JSON并更新
+    // 生成 setting JSON 并更新
     const newSettings = { ...channelSettings, [key]: value };
     const settingsJson = JSON.stringify(newSettings);
     handleInputChange('setting', settingsJson);
@@ -521,16 +521,16 @@ const EditChannelModal = (props) => {
       formApiRef.current.setValue(key, value);
     }
 
-    // 同步更新inputs状态
+    // 同步更新 inputs 状态
     setInputs((prev) => ({ ...prev, [key]: value }));
 
-    // 需要更新settings，是一个json，例如{"azure_responses_version": "preview"}
+    // 需要更新 settings，是一个 json，例如{"azure_responses_version": "preview"}
     let settings = {};
     if (inputs.settings) {
       try {
         settings = JSON.parse(inputs.settings);
       } catch (error) {
-        console.error('解析设置失败:', error);
+        console.error('解析设置失败：', error);
       }
     }
     settings[key] = value;
@@ -559,7 +559,7 @@ const EditChannelModal = (props) => {
       Modal.confirm({
         title: '警告',
         content:
-          '不需要在末尾加/v1，New API会自动处理，添加后可能导致请求失败，是否继续？',
+          '不需要在末尾加/v1，New API 会自动处理，添加后可能导致请求失败，是否继续？',
         onOk: () => {
           setInputs((inputs) => ({ ...inputs, [name]: value }));
         },
@@ -648,7 +648,7 @@ const EditChannelModal = (props) => {
       const parsed = JSON.parse(rawValue);
       handleInputChange(fieldName, JSON.stringify(parsed, null, 2));
     } catch (error) {
-      showError(`${t('JSON格式错误')}: ${error.message}`);
+      showError(`${t('JSON 格式错误')}: ${error.message}`);
     }
   };
 
@@ -796,7 +796,7 @@ const EditChannelModal = (props) => {
         setBatch(false);
         setMultiToSingle(false);
       }
-      // 解析渠道额外设置并合并到data中
+      // 解析渠道额外设置并合并到 data 中
       if (data.setting) {
         try {
           const parsedSettings = JSON.parse(data.setting);
@@ -810,7 +810,7 @@ const EditChannelModal = (props) => {
           data.system_prompt_override =
             parsedSettings.system_prompt_override || false;
         } catch (error) {
-          console.error('解析渠道设置失败:', error);
+          console.error('解析渠道设置失败：', error);
           data.force_format = false;
           data.thinking_to_content = false;
           data.proxy = '';
@@ -866,7 +866,7 @@ const EditChannelModal = (props) => {
             ? parsedSettings.upstream_model_update_ignored_models.join(',')
             : '';
         } catch (error) {
-          console.error('解析其他设置失败:', error);
+          console.error('解析其他设置失败：', error);
           data.azure_responses_version = '';
           data.region = '';
           data.vertex_key_type = 'json';
@@ -923,7 +923,7 @@ const EditChannelModal = (props) => {
       // 同步企业账户状态
       setIsEnterpriseAccount(data.is_enterprise_account || false);
       setBasicModels(getChannelModels(data.type));
-      // 同步更新channelSettings状态显示
+      // 同步更新 channelSettings 状态显示
       setChannelSettings({
         force_format: data.force_format,
         thinking_to_content: data.thinking_to_content,
@@ -1321,7 +1321,7 @@ const EditChannelModal = (props) => {
     setModelSearchValue('');
     // 重置高级设置折叠状态
     setAdvancedSettingsOpen(false);
-    // 清空表单中的key_mode字段
+    // 清空表单中的 key_mode 字段
     if (formApiRef.current) {
       formApiRef.current.setValue('key_mode', undefined);
     }
@@ -1549,7 +1549,7 @@ const EditChannelModal = (props) => {
               );
               keys = parsed.filter(Boolean);
             } catch (err) {
-              showError(t('解析密钥文件失败: {{msg}}', { msg: err.message }));
+              showError(t('解析密钥文件失败：{{msg}}', { msg: err.message }));
               return;
             }
           }
@@ -1587,7 +1587,7 @@ const EditChannelModal = (props) => {
       localInputs.type === 45 &&
       (!localInputs.base_url || localInputs.base_url.trim() === '')
     ) {
-      showInfo(t('请输入API地址！'));
+      showInfo(t('请输入 API 地址！'));
       return;
     }
     const hasModelMapping =
@@ -1670,7 +1670,7 @@ const EditChannelModal = (props) => {
       localInputs.other = 'v2.1';
     }
 
-    // 生成渠道额外设置JSON
+    // 生成渠道额外设置 JSON
     const channelExtraSettings = {
       force_format: localInputs.force_format || false,
       thinking_to_content: localInputs.thinking_to_content || false,
@@ -1687,11 +1687,11 @@ const EditChannelModal = (props) => {
       try {
         settings = JSON.parse(localInputs.settings);
       } catch (error) {
-        console.error('解析settings失败:', error);
+        console.error('解析 settings 失败：', error);
       }
     }
 
-    // type === 20: 设置企业账户标识，无论是true还是false都要传到后端
+    // type === 20: 设置企业账户标识，无论是 true 还是 false 都要传到后端
     if (localInputs.type === 20) {
       settings.openrouter_enterprise =
         localInputs.is_enterprise_account === true;
@@ -1709,11 +1709,11 @@ const EditChannelModal = (props) => {
       delete settings.vertex_key_type;
     }
 
-    // type === 1 (OpenAI) 或 type === 14 (Claude): 设置字段透传控制（显式保存布尔值）
-    if (localInputs.type === 1 || localInputs.type === 14) {
+    // type === 1/58 (OpenAI/OpenAI Responses) 或 type === 14 (Claude): 设置字段透传控制（显式保存布尔值）
+    if (localInputs.type === 1 || localInputs.type === 58 || localInputs.type === 14) {
       settings.allow_service_tier = localInputs.allow_service_tier === true;
-      // 仅 OpenAI 渠道需要 store / safety_identifier / include_obfuscation
-      if (localInputs.type === 1) {
+      // OpenAI 系渠道需要 store / safety_identifier / include_obfuscation
+      if (localInputs.type === 1 || localInputs.type === 58) {
         settings.disable_store = localInputs.disable_store === true;
         settings.allow_safety_identifier =
           localInputs.allow_safety_identifier === true;
@@ -1790,7 +1790,7 @@ const EditChannelModal = (props) => {
       res = await API.put(`/api/channel/`, {
         ...localInputs,
         id: parseInt(channelId),
-        key_mode: isMultiKeyChannel ? keyMode : undefined, // 只在多key模式下传递
+        key_mode: isMultiKeyChannel ? keyMode : undefined, // 只在多 key 模式下传递
       });
     } else {
       res = await API.post(`/api/channel/`, {
@@ -2428,7 +2428,7 @@ const EditChannelModal = (props) => {
                   )}
 
                   {inputs.type === 1 && (
-                    <Form.Switch field='force_format' label={t('强制格式化')} checkedText={t('开')} uncheckedText={t('关')} onChange={(value) => handleChannelSettingsChange('force_format', value)} extraText={t('强制将响应格式化为 OpenAI 标准格式（只适用于OpenAI渠道类型）')} />
+                    <Form.Switch field='force_format' label={t('强制格式化')} checkedText={t('开')} uncheckedText={t('关')} onChange={(value) => handleChannelSettingsChange('force_format', value)} extraText={t('强制将响应格式化为 OpenAI 标准格式（只适用于 OpenAI 渠道类型）')} />
                   )}
 
                   <Form.Switch field='thinking_to_content' label={t('思考内容转换')} checkedText={t('开')} uncheckedText={t('关')} onChange={(value) => handleChannelSettingsChange('thinking_to_content', value)} extraText={t('将 reasoning_content 转换为 <think> 标签拼接到内容中')} />
@@ -3103,7 +3103,7 @@ const EditChannelModal = (props) => {
                       />
                     )}
 
-                    {inputs.type === 1 && (
+                    {(inputs.type === 1 || inputs.type === 58) && (
                       <Form.Input
                         field='openai_organization'
                         label={t('组织')}
@@ -3253,7 +3253,7 @@ const EditChannelModal = (props) => {
                               showClear
                               disabled={isIonetLocked}
                               extraText={t(
-                                '对于官方渠道，new-api已经内置地址，除非是第三方代理站点或者Azure的特殊接入地址，否则不需要填写',
+                                '对于官方渠道，new-api 已经内置地址，除非是第三方代理站点或者 Azure 的特殊接入地址，否则不需要填写',
                               )}
                             />
                           </div>
@@ -3576,22 +3576,497 @@ const EditChannelModal = (props) => {
                       <IconSetting size={16} />
                       <Text className='font-medium'>{t('高级设置')}</Text>
                     </div>
-                    <div className='flex items-center gap-1 text-sm' style={{ color: 'var(--semi-color-primary)' }}>
-                      <Text size='small' style={{ color: 'var(--semi-color-primary)' }}>
-                        {advancedSettingsOpen ? t('收起') : isEdit ? t('向左展开') : t('向右展开')}
-                      </Text>
-                      <IconChevronDown
-                        size={14}
-                        style={{
-                          transform: advancedSettingsOpen
-                            ? 'rotate(180deg)'
-                            : isEdit ? 'rotate(90deg)' : 'rotate(-90deg)',
-                          transition: 'transform 0.2s',
-                        }}
-                      />
+
+                    <Form.Select
+                      field='groups'
+                      label={t('分组')}
+                      placeholder={t('请选择可以使用该渠道的分组')}
+                      multiple
+                      allowAdditions
+                      additionLabel={t(
+                        '请在系统设置页面编辑分组倍率以添加新的分组：',
+                      )}
+                      optionList={groupOptions}
+                      style={{ width: '100%' }}
+                      onChange={(value) => handleInputChange('groups', value)}
+                    />
+
+                    <Form.Input
+                      field='tag'
+                      label={t('渠道标签')}
+                      placeholder={t('渠道标签')}
+                      showClear
+                      onChange={(value) => handleInputChange('tag', value)}
+                    />
+                    <Form.TextArea
+                      field='remark'
+                      label={t('备注')}
+                      placeholder={t('请输入备注（仅管理员可见）')}
+                      maxLength={255}
+                      showClear
+                      onChange={(value) => handleInputChange('remark', value)}
+                    />
+
+                    <Row gutter={12}>
+                      <Col span={12}>
+                        <Form.InputNumber
+                          field='priority'
+                          label={t('渠道优先级')}
+                          placeholder={t('渠道优先级')}
+                          min={0}
+                          onNumberChange={(value) =>
+                            handleInputChange('priority', value)
+                          }
+                          style={{ width: '100%' }}
+                        />
+                      </Col>
+                      <Col span={12}>
+                        <Form.InputNumber
+                          field='weight'
+                          label={t('渠道权重')}
+                          placeholder={t('渠道权重')}
+                          min={0}
+                          onNumberChange={(value) =>
+                            handleInputChange('weight', value)
+                          }
+                          style={{ width: '100%' }}
+                        />
+                      </Col>
+                    </Row>
+
+                    <Form.Switch
+                      field='auto_ban'
+                      label={t('是否自动禁用')}
+                      checkedText={t('开')}
+                      uncheckedText={t('关')}
+                      onChange={(value) => setAutoBan(value)}
+                      extraText={t(
+                        '仅当自动禁用开启时有效，关闭后不会自动禁用该渠道',
+                      )}
+                      initValue={autoBan}
+                    />
+
+                    <Form.TextArea
+                      field='param_override'
+                      label={t('参数覆盖')}
+                      placeholder={
+                        t(
+                          '此项可选，用于覆盖请求参数。不支持覆盖 stream 参数',
+                        ) +
+                        '\n' +
+                        t('旧格式（直接覆盖）：') +
+                        '\n{\n  "temperature": 0,\n  "max_tokens": 1000\n}' +
+                        '\n\n' +
+                        t('新格式（支持条件判断与json自定义）：') +
+                        '\n{\n  "operations": [\n    {\n      "path": "temperature",\n      "mode": "set",\n      "value": 0.7,\n      "conditions": [\n        {\n          "path": "model",\n          "mode": "prefix",\n          "value": "gpt"\n        }\n      ]\n    }\n  ]\n}'
+                      }
+                      autosize
+                      onChange={(value) =>
+                        handleInputChange('param_override', value)
+                      }
+                      extraText={
+                        <div className='flex gap-2 flex-wrap'>
+                          <Text
+                            className='!text-semi-color-primary cursor-pointer'
+                            onClick={() =>
+                              handleInputChange(
+                                'param_override',
+                                JSON.stringify({ temperature: 0 }, null, 2),
+                              )
+                            }
+                          >
+                            {t('旧格式模板')}
+                          </Text>
+                          <Text
+                            className='!text-semi-color-primary cursor-pointer'
+                            onClick={() =>
+                              handleInputChange(
+                                'param_override',
+                                JSON.stringify(
+                                  {
+                                    operations: [
+                                      {
+                                        path: 'temperature',
+                                        mode: 'set',
+                                        value: 0.7,
+                                        conditions: [
+                                          {
+                                            path: 'model',
+                                            mode: 'prefix',
+                                            value: 'gpt',
+                                          },
+                                        ],
+                                        logic: 'AND',
+                                      },
+                                    ],
+                                  },
+                                  null,
+                                  2,
+                                ),
+                              )
+                            }
+                          >
+                            {t('新格式模板')}
+                          </Text>
+                          <Text
+                            className='!text-semi-color-primary cursor-pointer'
+                            onClick={() => formatJsonField('param_override')}
+                          >
+                            {t('格式化')}
+                          </Text>
+                        </div>
+                      }
+                      showClear
+                    />
+
+                    <Form.TextArea
+                      field='header_override'
+                      label={t('请求头覆盖')}
+                      placeholder={
+                        t('此项可选，用于覆盖请求头参数') +
+                        '\n' +
+                        t('格式示例：') +
+                        '\n{\n  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",\n  "Authorization": "Bearer {api_key}"\n}'
+                      }
+                      autosize
+                      onChange={(value) =>
+                        handleInputChange('header_override', value)
+                      }
+                      extraText={
+                        <div className='flex flex-col gap-1'>
+                          <div className='flex gap-2 flex-wrap items-center'>
+                            <Text
+                              className='!text-semi-color-primary cursor-pointer'
+                              onClick={() =>
+                                handleInputChange(
+                                  'header_override',
+                                  JSON.stringify(
+                                    {
+                                      '*': true,
+                                      're:^X-Trace-.*$': true,
+                                      'X-Foo': '{client_header:X-Foo}',
+                                      Authorization: 'Bearer {api_key}',
+                                      'User-Agent':
+                                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0',
+                                    },
+                                    null,
+                                    2,
+                                  ),
+                                )
+                              }
+                            >
+                              {t('填入模板')}
+                            </Text>
+                            <Text
+                              className='!text-semi-color-primary cursor-pointer'
+                              onClick={() =>
+                                handleInputChange(
+                                  'header_override',
+                                  JSON.stringify(
+                                    {
+                                      '*': true,
+                                    },
+                                    null,
+                                    2,
+                                  ),
+                                )
+                              }
+                            >
+                              {t('填入透传模版')}
+                            </Text>
+                            <Text
+                              className='!text-semi-color-primary cursor-pointer'
+                              onClick={() => formatJsonField('header_override')}
+                            >
+                              {t('格式化')}
+                            </Text>
+                          </div>
+                          <div>
+                            <Text type='tertiary' size='small'>
+                              {t('支持变量：')}
+                            </Text>
+                            <div className='text-xs text-tertiary ml-2'>
+                              <div>
+                                {t('渠道密钥')}: {'{api_key}'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                      showClear
+                    />
+
+                    <JSONEditor
+                      key={`status_code_mapping-${isEdit ? channelId : 'new'}`}
+                      field='status_code_mapping'
+                      label={t('状态码复写')}
+                      placeholder={
+                        t(
+                          '此项可选，用于复写返回的状态码，仅影响本地判断，不修改返回到上游的状态码，比如将claude渠道的400错误复写为500（用于重试），请勿滥用该功能，例如：',
+                        ) +
+                        '\n' +
+                        JSON.stringify(STATUS_CODE_MAPPING_EXAMPLE, null, 2)
+                      }
+                      value={inputs.status_code_mapping || ''}
+                      onChange={(value) =>
+                        handleInputChange('status_code_mapping', value)
+                      }
+                      template={STATUS_CODE_MAPPING_EXAMPLE}
+                      templateLabel={t('填入模板')}
+                      editorType='keyValue'
+                      formApi={formApiRef.current}
+                      extraText={t(
+                        '键为原状态码，值为要复写的状态码，仅影响本地判断',
+                      )}
+                    />
+
+                    {/* 字段透传控制 - OpenAI 渠道 */}
+                    {(inputs.type === 1 || inputs.type === 58) && (
+                      <>
+                        <div className='mt-4 mb-2 text-sm font-medium text-gray-700'>
+                          {t('字段透传控制')}
+                        </div>
+
+                        <Form.Switch
+                          field='allow_service_tier'
+                          label={t('允许 service_tier 透传')}
+                          checkedText={t('开')}
+                          uncheckedText={t('关')}
+                          onChange={(value) =>
+                            handleChannelOtherSettingsChange(
+                              'allow_service_tier',
+                              value,
+                            )
+                          }
+                          extraText={t(
+                            'service_tier 字段用于指定服务层级，允许透传可能导致实际计费高于预期。默认关闭以避免额外费用',
+                          )}
+                        />
+
+                        <Form.Switch
+                          field='disable_store'
+                          label={t('禁用 store 透传')}
+                          checkedText={t('开')}
+                          uncheckedText={t('关')}
+                          onChange={(value) =>
+                            handleChannelOtherSettingsChange(
+                              'disable_store',
+                              value,
+                            )
+                          }
+                          extraText={t(
+                            'store 字段用于授权 OpenAI 存储请求数据以评估和优化产品。默认关闭，开启后可能导致 Codex 无法正常使用',
+                          )}
+                        />
+
+                        <Form.Switch
+                          field='allow_safety_identifier'
+                          label={t('允许 safety_identifier 透传')}
+                          checkedText={t('开')}
+                          uncheckedText={t('关')}
+                          onChange={(value) =>
+                            handleChannelOtherSettingsChange(
+                              'allow_safety_identifier',
+                              value,
+                            )
+                          }
+                          extraText={t(
+                            'safety_identifier 字段用于帮助 OpenAI 识别可能违反使用政策的应用程序用户。默认关闭以保护用户隐私',
+                          )}
+                        />
+
+                        <Form.Switch
+                          field='allow_include_obfuscation'
+                          label={t(
+                            '允许 stream_options.include_obfuscation 透传',
+                          )}
+                          checkedText={t('开')}
+                          uncheckedText={t('关')}
+                          onChange={(value) =>
+                            handleChannelOtherSettingsChange(
+                              'allow_include_obfuscation',
+                              value,
+                            )
+                          }
+                          extraText={t(
+                            'include_obfuscation 用于控制 Responses 流混淆字段。默认关闭以避免客户端关闭该安全保护',
+                          )}
+                        />
+                      </>
+                    )}
+
+                    {/* 字段透传控制 - Claude 渠道 */}
+                    {inputs.type === 14 && (
+                      <>
+                        <div className='mt-4 mb-2 text-sm font-medium text-gray-700'>
+                          {t('字段透传控制')}
+                        </div>
+
+                        <Form.Switch
+                          field='allow_service_tier'
+                          label={t('允许 service_tier 透传')}
+                          checkedText={t('开')}
+                          uncheckedText={t('关')}
+                          onChange={(value) =>
+                            handleChannelOtherSettingsChange(
+                              'allow_service_tier',
+                              value,
+                            )
+                          }
+                          extraText={t(
+                            'service_tier 字段用于指定服务层级，允许透传可能导致实际计费高于预期。默认关闭以避免额外费用',
+                          )}
+                        />
+
+                        <Form.Switch
+                          field='allow_inference_geo'
+                          label={t('允许 inference_geo 透传')}
+                          checkedText={t('开')}
+                          uncheckedText={t('关')}
+                          onChange={(value) =>
+                            handleChannelOtherSettingsChange(
+                              'allow_inference_geo',
+                              value,
+                            )
+                          }
+                          extraText={t(
+                            'inference_geo 字段用于控制 Claude 数据驻留推理区域。默认关闭以避免未经授权透传地域信息',
+                          )}
+                        />
+                      </>
+                    )}
+                  </Card>
+                </div>
+
+                {/* Channel Extra Settings Card */}
+                <div
+                  ref={(el) =>
+                    (formSectionRefs.current.channelExtraSettings = el)
+                  }
+                >
+                  <Card className='!rounded-2xl shadow-sm border-0 mb-6'>
+                    {/* Header: Channel Extra Settings */}
+                    <div className='flex items-center mb-2'>
+                      <Avatar
+                        size='small'
+                        color='violet'
+                        className='mr-2 shadow-md'
+                      >
+                        <IconBolt size={16} />
+                      </Avatar>
+                      <div>
+                        <Text className='text-lg font-medium'>
+                          {t('渠道额外设置')}
+                        </Text>
+                      </div>
                     </div>
-                  </div>
-                )}
+
+                    {inputs.type === 14 && (
+                      <Form.Switch
+                        field='claude_beta_query'
+                        label={t('Claude 强制 beta=true')}
+                        checkedText={t('开')}
+                        uncheckedText={t('关')}
+                        onChange={(value) =>
+                          handleChannelOtherSettingsChange(
+                            'claude_beta_query',
+                            value,
+                          )
+                        }
+                        extraText={t(
+                          '开启后，该渠道请求 Claude 时将强制追加 ?beta=true（无需客户端手动传参）',
+                        )}
+                      />
+                    )}
+
+                    {(inputs.type === 1 || inputs.type === 58) && (
+                      <Form.Switch
+                        field='force_format'
+                        label={t('强制格式化')}
+                        checkedText={t('开')}
+                        uncheckedText={t('关')}
+                        onChange={(value) =>
+                          handleChannelSettingsChange('force_format', value)
+                        }
+                        extraText={t(
+                          '强制将响应格式化为 OpenAI 标准格式（只适用于 OpenAI 渠道类型）',
+                        )}
+                      />
+                    )}
+
+                    <Form.Switch
+                      field='thinking_to_content'
+                      label={t('思考内容转换')}
+                      checkedText={t('开')}
+                      uncheckedText={t('关')}
+                      onChange={(value) =>
+                        handleChannelSettingsChange(
+                          'thinking_to_content',
+                          value,
+                        )
+                      }
+                      extraText={t(
+                        '将 reasoning_content 转换为 <think> 标签拼接到内容中',
+                      )}
+                    />
+
+                    <Form.Switch
+                      field='pass_through_body_enabled'
+                      label={t('透传请求体')}
+                      checkedText={t('开')}
+                      uncheckedText={t('关')}
+                      onChange={(value) =>
+                        handleChannelSettingsChange(
+                          'pass_through_body_enabled',
+                          value,
+                        )
+                      }
+                      extraText={t('启用请求体透传功能')}
+                    />
+
+                    <Form.Input
+                      field='proxy'
+                      label={t('代理地址')}
+                      placeholder={t('例如: socks5://user:pass@host:port')}
+                      onChange={(value) =>
+                        handleChannelSettingsChange('proxy', value)
+                      }
+                      showClear
+                      extraText={t('用于配置网络代理，支持 socks5 协议')}
+                    />
+
+                    <Form.TextArea
+                      field='system_prompt'
+                      label={t('系统提示词')}
+                      placeholder={t(
+                        '输入系统提示词，用户的系统提示词将优先于此设置',
+                      )}
+                      onChange={(value) =>
+                        handleChannelSettingsChange('system_prompt', value)
+                      }
+                      autosize
+                      showClear
+                      extraText={t(
+                        '用户优先：如果用户在请求中指定了系统提示词，将优先使用用户的设置',
+                      )}
+                    />
+                    <Form.Switch
+                      field='system_prompt_override'
+                      label={t('系统提示词拼接')}
+                      checkedText={t('开')}
+                      uncheckedText={t('关')}
+                      onChange={(value) =>
+                        handleChannelSettingsChange(
+                          'system_prompt_override',
+                          value,
+                        )
+                      }
+                      extraText={t(
+                        '如果用户请求中包含系统提示词，则使用此设置拼接到用户的系统提示词前面',
+                      )}
+                    />
+                  </Card>
+                </div>
               </div>
             </Spin>
 
@@ -3684,7 +4159,7 @@ const EditChannelModal = (props) => {
         description={verificationState.description}
       />
 
-      {/* 使用ChannelKeyDisplay组件显示密钥 */}
+      {/* 使用 ChannelKeyDisplay 组件显示密钥 */}
       <Modal
         title={
           <div className='flex items-center'>
