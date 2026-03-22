@@ -89,6 +89,13 @@ export const useChannelsData = () => {
   const [isBatchTesting, setIsBatchTesting] = useState(false);
   const [modelTablePage, setModelTablePage] = useState(1);
   const [selectedEndpointType, setSelectedEndpointType] = useState('');
+
+  const getDefaultEndpointTypeForChannel = (channelType) => {
+    if (channelType === 57 || channelType === 58) {
+      return 'openai-response';
+    }
+    return '';
+  };
   const [isStreamTest, setIsStreamTest] = useState(false);
   const [globalPassThroughEnabled, setGlobalPassThroughEnabled] =
     useState(false);
@@ -216,6 +223,15 @@ export const useChannelsData = () => {
       );
     }
   }, [visibleColumns]);
+
+  useEffect(() => {
+    if (!showModelTestModal || !currentTestChannel) {
+      return;
+    }
+    setSelectedEndpointType(
+      getDefaultEndpointTypeForChannel(currentTestChannel.type),
+    );
+  }, [showModelTestModal, currentTestChannel]);
 
   const handleColumnVisibilityChange = (columnKey, checked) => {
     const updatedColumns = { ...visibleColumns, [columnKey]: checked };

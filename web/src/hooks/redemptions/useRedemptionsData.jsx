@@ -33,6 +33,7 @@ export const useRedemptionsData = () => {
 
   // Basic state
   const [redemptions, setRedemptions] = useState([]);
+  const [subscriptionPlanMap, setSubscriptionPlanMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [activePage, setActivePage] = useState(1);
@@ -90,6 +91,24 @@ export const useRedemptionsData = () => {
       showError(error.message);
     }
     setLoading(false);
+  };
+
+  const loadSubscriptionPlans = async () => {
+    try {
+      const res = await API.get('/api/subscription/admin/plans');
+      const { success, data } = res.data;
+      if (!success || !Array.isArray(data)) {
+        return;
+      }
+      const next = new Map();
+      data.forEach((item) => {
+        const plan = item?.plan;
+        if (plan?.id) {
+          next.set(Number(plan.id), plan.title || `#${plan.id}`);
+        }
+      });
+      setSubscriptionPlanMap(next);
+    } catch {}
   };
 
   // Search redemption codes
@@ -296,6 +315,7 @@ export const useRedemptionsData = () => {
 
   // Initialize data loading
   useEffect(() => {
+    loadSubscriptionPlans().then();
     loadRedemptions(1, pageSize)
       .then()
       .catch((reason) => {
@@ -320,6 +340,9 @@ export const useRedemptionsData = () => {
     // Form state
     formApi,
     formInitValues,
+    subscriptionPlanMap,
+    getSubscriptionPlanTitle: (planId) =>
+      subscriptionPlanMap.get(Number(planId)) || '',
 
     // UI state
     compactMode,
