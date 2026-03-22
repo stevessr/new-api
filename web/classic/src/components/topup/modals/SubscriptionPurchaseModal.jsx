@@ -28,7 +28,7 @@ import {
   Divider,
   Tooltip,
 } from '@douyinfe/semi-ui';
-import { Crown, CalendarClock, Package } from 'lucide-react';
+import { Crown, CalendarClock, Package, Wallet } from 'lucide-react';
 import { SiStripe } from 'react-icons/si';
 import { IconCreditCard } from '@douyinfe/semi-icons';
 import { renderQuota } from '../../../helpers';
@@ -52,7 +52,10 @@ const SubscriptionPurchaseModal = ({
   enableOnlineTopUp = false,
   enableStripeTopUp = false,
   enableCreemTopUp = false,
+  userQuota = 0,
+  requiredWalletQuota = 0,
   purchaseLimitInfo = null,
+  onPayWallet,
   onPayStripe,
   onPayCreem,
   onPayEpay,
@@ -69,11 +72,14 @@ const SubscriptionPurchaseModal = ({
   const hasStripe = enableStripeTopUp && !!plan?.stripe_price_id;
   const hasCreem = enableCreemTopUp && !!plan?.creem_product_id;
   const hasEpay = enableOnlineTopUp && epayMethods.length > 0;
-  const hasAnyPayment = hasStripe || hasCreem || hasEpay;
+  const hasWallet = true;
+  const hasAnyPayment = hasWallet || hasStripe || hasCreem || hasEpay;
   const purchaseLimit = Number(purchaseLimitInfo?.limit || 0);
   const purchaseCount = Number(purchaseLimitInfo?.count || 0);
   const purchaseLimitReached =
     purchaseLimit > 0 && purchaseCount >= purchaseLimit;
+  const walletQuotaRequired = Number(requiredWalletQuota || 0);
+  const walletInsufficient = Number(userQuota || 0) < walletQuotaRequired;
 
   return (
     <Modal
@@ -184,6 +190,36 @@ const SubscriptionPurchaseModal = ({
               <Text size='small' type='tertiary'>
                 {t('选择支付方式')}：
               </Text>
+
+              {/* 钱包支付 */}
+              {hasWallet && (
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between text-xs text-gray-500'>
+                    <span>
+                      {t('当前余额')}：{renderQuota(userQuota)}
+                    </span>
+                    <span>
+                      {t('需支付额度')}：{renderQuota(walletQuotaRequired)}
+                    </span>
+                  </div>
+                  <Button
+                    theme='solid'
+                    type='primary'
+                    className='w-full'
+                    icon={<Wallet size={14} />}
+                    onClick={onPayWallet}
+                    loading={paying}
+                    disabled={purchaseLimitReached || walletInsufficient}
+                  >
+                    {t('钱包支付')}
+                  </Button>
+                  {walletInsufficient && (
+                    <Text size='small' type='danger'>
+                      {t('余额不足')}
+                    </Text>
+                  )}
+                </div>
+              )}
 
               {/* Stripe / Creem */}
               {(hasStripe || hasCreem) && (
