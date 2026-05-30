@@ -12,9 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ErrRedeemFailed is returned when redemption fails due to database error
-var ErrRedeemFailed = errors.New("redeem.failed")
-
 const (
 	RedemptionTypeQuota        = "quota"
 	RedemptionTypeSubscription = "subscription"
