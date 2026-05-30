@@ -3950,8 +3950,8 @@ const EditChannelModal = (props) => {
                         />
                       </>
                     )}
-                  </Card>
-                </div>
+                  </div>
+                  )}
 
                 {/* Channel Extra Settings Card */}
                 <div
