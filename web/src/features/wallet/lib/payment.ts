@@ -76,6 +76,13 @@ export function isStripePayment(paymentType: string): boolean {
 }
 
 /**
+ * Check if LDC uses a direct checkout URL
+ */
+export function isLDCPayment(paymentType: string): boolean {
+  return paymentType === PAYMENT_TYPES.LDC
+}
+
+/**
  * Check if payment method is Waffo
  */
 export function isWaffoPayment(paymentType: string): boolean {

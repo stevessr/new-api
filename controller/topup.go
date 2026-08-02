@@ -95,9 +95,32 @@ func GetTopUpInfo(c *gin.Context) {
 			payMethods = append(payMethods, waffoMethod)
 		}
 	}
+	enableLDC := isLDCTopUpEnabled()
+	if enableLDC {
+		hasLDC := false
+		for _, method := range payMethods {
+			if method["type"] == model.PaymentMethodLDC {
+				hasLDC = true
+				break
+			}
+		}
+		if !hasLDC {
+			payMethods = append(payMethods, map[string]string{
+				"name":      "LDC",
+				"type":      model.PaymentMethodLDC,
+				"color":     "#6B4EFF",
+				"min_topup": strconv.FormatInt(getLDCMinTopup(), 10),
+			})
+		}
+	}
+	minTopup := int64(operation_setting.MinTopUp)
+	if enableLDC && !isEpayTopUpEnabled() && getLDCMinTopup() > minTopup {
+		minTopup = getLDCMinTopup()
+	}
 
 	data := gin.H{
-		"enable_online_topup":              isEpayTopUpEnabled(),
+		"enable_online_topup":              isEpayTopUpEnabled() || enableLDC,
+		"enable_ldc_topup":                 enableLDC,
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
 		"enable_creem_topup":               isCreemTopUpEnabled(),
 		"enable_waffo_topup":               enableWaffo,
@@ -113,10 +136,11 @@ func GetTopUpInfo(c *gin.Context) {
 		}(),
 		"creem_products":          setting.CreemProducts,
 		"pay_methods":             payMethods,
-		"min_topup":               operation_setting.MinTopUp,
+		"min_topup":               minTopup,
 		"stripe_min_topup":        setting.StripeMinTopUp,
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
+		"ldc_min_topup":           getLDCMinTopup(),
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
 		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
 		"topup_link":              common.TopUpLink,
@@ -194,6 +218,10 @@ func RequestEpay(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "参数错误"})
 		return
 	}
+	if req.PaymentMethod == model.PaymentMethodLDC {
+		requestLDCOrder(c, req)
+		return
+	}
 	if req.Amount < getMinTopup() {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": fmt.Sprintf("充值数量不能小于 %d", getMinTopup())})
 		return
@@ -267,8 +295,10 @@ func RequestEpay(c *gin.Context) {
 }
 
 // tradeNo lock
-var orderLocks sync.Map
-var createLock sync.Mutex
+var (
+	orderLocks sync.Map
+	createLock sync.Mutex
+)
 
 // refCountedMutex 带引用计数的互斥锁，确保最后一个使用者才从 map 中删除
 type refCountedMutex struct {

@@ -48,6 +48,7 @@ const PAYMENT_TYPE_ICON_NAMES: Record<string, string> = {
   stripe: 'SiStripe',
   waffo_pancake: 'LuCreditCard',
   wxpay: 'SiWechat',
+  ldcpay: 'LuCoins',
 }
 
 function getDefaultIconName(type: string) {
@@ -87,6 +88,15 @@ export function PaymentMethodsVisualEditor({
         min_topup: '10',
         name: 'Stripe',
         type: 'stripe',
+      },
+    },
+    {
+      name: 'LDC',
+      template: {
+        icon: getDefaultIconName('ldcpay'),
+        min_topup: '1',
+        name: 'LDC',
+        type: 'ldcpay',
       },
     },
     {

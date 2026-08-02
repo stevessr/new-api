@@ -45,7 +45,8 @@ func SubscriptionRequestEpay(c *gin.Context) {
 		common.ApiErrorMsg(c, "套餐金额过低")
 		return
 	}
-	if !operation_setting.ContainsPayMethod(req.PaymentMethod) {
+	if !operation_setting.ContainsPayMethod(req.PaymentMethod) &&
+		(req.PaymentMethod != model.PaymentMethodLDC || !isLDCTopUpEnabled()) {
 		common.ApiErrorMsg(c, "支付方式不存在")
 		return
 	}
@@ -61,6 +62,10 @@ func SubscriptionRequestEpay(c *gin.Context) {
 			common.ApiErrorMsg(c, "已达到该套餐购买上限")
 			return
 		}
+	}
+	if req.PaymentMethod == model.PaymentMethodLDC {
+		requestLDCSubscription(c, plan)
+		return
 	}
 
 	callBackAddress := service.GetCallbackAddress()

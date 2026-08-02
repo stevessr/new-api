@@ -33,6 +33,7 @@ import {
   isStripePayment,
   isWaffoPayment,
   isWaffoPancakePayment,
+  isLDCPayment,
   submitPaymentForm,
 } from '../lib'
 import type { AmountRequest, AmountResponse } from '../types'
@@ -128,6 +129,10 @@ export function usePayment() {
           toast.error(response.message || i18next.t('Payment request failed'))
           return false
         }
+        const paymentUrl =
+          'url' in response && typeof response.url === 'string'
+            ? response.url
+            : undefined
 
         // Handle Stripe payment
         if (isStripe && response.data?.pay_link) {
@@ -136,9 +141,18 @@ export function usePayment() {
           return true
         }
 
+        if (isLDCPayment(paymentType) && response.data) {
+          const url = paymentUrl
+          if (url) {
+            window.location.href = url
+            toast.success(i18next.t('Redirecting to payment page...'))
+            return true
+          }
+        }
+
         // Handle non-Stripe payment
         if (!isStripe && response.data) {
-          const url = (response as unknown as { url?: string }).url
+          const url = paymentUrl
           if (url) {
             submitPaymentForm(url, response.data)
             toast.success(i18next.t('Redirecting to payment page...'))

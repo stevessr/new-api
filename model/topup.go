@@ -29,6 +29,7 @@ const (
 	PaymentMethodCreem        = "creem"
 	PaymentMethodWaffo        = "waffo"
 	PaymentMethodWaffoPancake = "waffo_pancake"
+	PaymentMethodLDC          = "ldcpay"
 	PaymentMethodBalance      = "balance"
 )
 
@@ -38,6 +39,7 @@ const (
 	PaymentProviderCreem        = "creem"
 	PaymentProviderWaffo        = "waffo"
 	PaymentProviderWaffoPancake = "waffo_pancake"
+	PaymentProviderLDC          = "ldc"
 	PaymentProviderBalance      = "balance"
 )
 
@@ -219,7 +221,6 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		return tx.Model(&User{}).Where("id = ?", topUp.UserId).
 			Updates(map[string]interface{}{"stripe_customer": customerId, "quota": gorm.Expr("quota + ?", quota)}).Error
 	})
-
 	if err != nil {
 		common.SysError("topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
@@ -454,7 +455,6 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 		paymentMethod = topUp.PaymentMethod
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -464,6 +464,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	RecordTopupLog(userId, fmt.Sprintf("管理员补单成功，充值金额: %v，支付金额：%f", logger.FormatQuota(quotaToAdd), payMoney), callerIp, paymentMethod, "admin")
 	return nil
 }
+
 func RechargeCreem(referenceId string, customerEmail string, customerName string, callerIp string) (err error) {
 	if referenceId == "" {
 		return errors.New("未提供支付单号")
@@ -526,7 +527,6 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 
 		return tx.Model(&User{}).Where("id = ?", topUp.UserId).Updates(updateFields).Error
 	})
-
 	if err != nil {
 		common.SysError("creem topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
@@ -584,7 +584,6 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 
 		return tx.Model(&User{}).Where("id = ?", topUp.UserId).Update("quota", gorm.Expr("quota + ?", quotaToAdd)).Error
 	})
-
 	if err != nil {
 		common.SysError("waffo topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
@@ -644,7 +643,6 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 
 		return tx.Model(&User{}).Where("id = ?", topUp.UserId).Update("quota", gorm.Expr("quota + ?", quotaToAdd)).Error
 	})
-
 	if err != nil {
 		common.SysError("waffo pancake topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")

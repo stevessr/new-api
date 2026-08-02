@@ -1,0 +1,12 @@
+{
+  "Enable LINUX DO Credit after the client credentials and signing key are configured.": "Enable LINUX DO Credit after the client credentials and signing key are configured.",
+  "The LINUX DO Credit EPay-compatible base URL.": "The LINUX DO Credit EPay-compatible base URL.",
+  "Enter new secret to update": "Enter new secret to update",
+  "Leave blank unless rotating the client secret.": "Leave blank unless rotating the client secret.",
+  "Enter new private key to update": "Enter new private key to update",
+  "Use an Ed25519 PKCS#8 PEM, base64, or hexadecimal private key.": "Use an Ed25519 PKCS#8 PEM, base64, or hexadecimal private key.",
+  "Leave blank to use the default callback URL": "Leave blank to use the default callback URL",
+  "Optional public URL registered with LINUX DO Credit.": "Optional public URL registered with LINUX DO Credit.",
+  "Leave blank to return to the wallet": "Leave blank to return to the wallet",
+  "Optional browser return URL after the payment.": "Optional browser return URL after the payment."
+}

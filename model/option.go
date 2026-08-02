@@ -80,6 +80,14 @@ func InitOptionMap() {
 	common.OptionMap["CustomCallbackAddress"] = ""
 	common.OptionMap["EpayId"] = ""
 	common.OptionMap["EpayKey"] = ""
+	common.OptionMap["LDCEnabled"] = strconv.FormatBool(setting.LDCEnabled)
+	common.OptionMap["LDCBaseURL"] = setting.LDCBaseURL
+	common.OptionMap["LDCClientID"] = setting.LDCClientID
+	common.OptionMap["LDCClientSecret"] = setting.LDCClientSecret
+	common.OptionMap["LDCPrivateKey"] = setting.LDCPrivateKey
+	common.OptionMap["LDCMinTopUp"] = strconv.Itoa(setting.LDCMinTopUp)
+	common.OptionMap["LDCNotifyURL"] = setting.LDCNotifyURL
+	common.OptionMap["LDCReturnURL"] = setting.LDCReturnURL
 	common.OptionMap["Price"] = strconv.FormatFloat(operation_setting.Price, 'f', -1, 64)
 	common.OptionMap["USDExchangeRate"] = strconv.FormatFloat(operation_setting.USDExchangeRate, 'f', -1, 64)
 	common.OptionMap["MinTopUp"] = strconv.Itoa(operation_setting.MinTopUp)
@@ -152,8 +160,8 @@ func InitOptionMap() {
 	common.OptionMap["AudioRatio"] = ratio_setting.AudioRatio2JSONString()
 	common.OptionMap["AudioCompletionRatio"] = ratio_setting.AudioCompletionRatio2JSONString()
 	common.OptionMap["TopUpLink"] = common.TopUpLink
-	//common.OptionMap["ChatLink"] = common.ChatLink
-	//common.OptionMap["ChatLink2"] = common.ChatLink2
+	// common.OptionMap["ChatLink"] = common.ChatLink
+	// common.OptionMap["ChatLink2"] = common.ChatLink2
 	common.OptionMap["QuotaPerUnit"] = strconv.FormatFloat(common.QuotaPerUnit, 'f', -1, 64)
 	common.OptionMap["RetryTimes"] = strconv.Itoa(common.RetryTimes)
 	common.OptionMap["DataExportInterval"] = strconv.Itoa(common.DataExportInterval)
@@ -305,6 +313,8 @@ func updateOptionMap(key string, value string) (err error) {
 	if strings.HasSuffix(key, "Enabled") || key == "DefaultCollapseSidebar" || key == "DefaultUseAutoGroup" || key == "SMTPForceAuthLogin" || key == "SMTPInsecureSkipVerify" {
 		boolValue := value == "true"
 		switch key {
+		case "LDCEnabled":
+			setting.LDCEnabled = boolValue
 		case "PasswordRegisterEnabled":
 			common.PasswordRegisterEnabled = boolValue
 		case "PasswordLoginEnabled":
@@ -425,6 +435,20 @@ func updateOptionMap(key string, value string) (err error) {
 		operation_setting.EpayId = value
 	case "EpayKey":
 		operation_setting.EpayKey = value
+	case "LDCBaseURL":
+		setting.LDCBaseURL = value
+	case "LDCClientID":
+		setting.LDCClientID = value
+	case "LDCClientSecret":
+		setting.LDCClientSecret = value
+	case "LDCPrivateKey":
+		setting.LDCPrivateKey = value
+	case "LDCMinTopUp":
+		setting.LDCMinTopUp, _ = strconv.Atoi(value)
+	case "LDCNotifyURL":
+		setting.LDCNotifyURL = value
+	case "LDCReturnURL":
+		setting.LDCReturnURL = value
 	case "Price":
 		operation_setting.Price, _ = strconv.ParseFloat(value, 64)
 	case "USDExchangeRate":
@@ -575,9 +599,9 @@ func updateOptionMap(key string, value string) (err error) {
 		err = ratio_setting.UpdateAudioCompletionRatioByJSONString(value)
 	case "TopUpLink":
 		common.TopUpLink = value
-	//case "ChatLink":
+	// case "ChatLink":
 	//	common.ChatLink = value
-	//case "ChatLink2":
+	// case "ChatLink2":
 	//	common.ChatLink2 = value
 	case "ChannelDisableThreshold":
 		common.ChannelDisableThreshold, _ = strconv.ParseFloat(value, 64)

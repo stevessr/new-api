@@ -25,6 +25,7 @@ import {
   isStripePayment,
   isWaffoPayment,
   isWaffoPancakePayment,
+  isLDCPayment,
 } from './payment'
 
 describe('payment type classification', () => {
@@ -33,6 +34,7 @@ describe('payment type classification', () => {
     assert.equal(isWaffoPayment(PAYMENT_TYPES.WAFFO_PANCAKE), false)
     assert.equal(isWaffoPancakePayment(PAYMENT_TYPES.WAFFO_PANCAKE), true)
     assert.equal(isWaffoPancakePayment(PAYMENT_TYPES.WAFFO), false)
+    assert.equal(isLDCPayment(PAYMENT_TYPES.LDC), true)
     assert.equal(isStripePayment(PAYMENT_TYPES.STRIPE), true)
   })
 })

@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { isLDCPayment } from '@/features/wallet/lib/payment'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { formatQuota } from '@/lib/format'
 import { DEFAULT_CURRENCY_CONFIG } from '@/stores/system-config-store'
@@ -197,6 +198,11 @@ export function SubscriptionPurchaseDialog(props: Props) {
         payment_method: selectedEpayMethod,
       })
       if (res.message === 'success' && res.url) {
+        if (isLDCPayment(selectedEpayMethod)) {
+          toast.success(t('Redirecting to payment page...'))
+          window.location.href = res.url
+          return
+        }
         const form = document.createElement('form')
         form.action = res.url
         form.method = 'POST'

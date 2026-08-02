@@ -94,6 +94,23 @@ function isHttpOriginUrl(value: string) {
   }
 }
 
+function isHttpCallbackUrl(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return true
+
+  try {
+    const url = new URL(trimmed)
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      !!url.host &&
+      !url.username &&
+      !url.password
+    )
+  } catch {
+    return false
+  }
+}
+
 const paymentSchema = z.object({
   PayAddress: z.string().refine((value) => {
     const trimmed = value.trim()
@@ -141,6 +158,31 @@ const paymentSchema = z.object({
       })
     }
   }),
+  LDCEnabled: z.boolean(),
+  LDCBaseURL: z.string().refine((value) => {
+    const trimmed = value.trim()
+    if (!trimmed) return true
+    try {
+      const url = new URL(trimmed)
+      return (
+        (url.protocol === 'http:' || url.protocol === 'https:') &&
+        !url.search &&
+        !url.hash
+      )
+    } catch {
+      return false
+    }
+  }, 'Provide a valid LDC URL'),
+  LDCClientID: z.string(),
+  LDCClientSecret: z.string(),
+  LDCPrivateKey: z.string(),
+  LDCMinTopUp: z.coerce.number().min(1),
+  LDCNotifyURL: z
+    .string()
+    .refine(isHttpCallbackUrl, 'Provide a valid LDC notify URL'),
+  LDCReturnURL: z
+    .string()
+    .refine(isHttpCallbackUrl, 'Provide a valid LDC return URL'),
   StripeApiSecret: z.string(),
   StripeWebhookSecret: z.string(),
   StripePriceId: z.string(),
@@ -427,6 +469,14 @@ export function PaymentSettingsSection({
       PayMethods: values.PayMethods.trim(),
       AmountOptions: values.AmountOptions.trim(),
       AmountDiscount: values.AmountDiscount.trim(),
+      LDCEnabled: values.LDCEnabled,
+      LDCBaseURL: removeTrailingSlash(values.LDCBaseURL.trim()),
+      LDCClientID: values.LDCClientID.trim(),
+      LDCClientSecret: values.LDCClientSecret.trim(),
+      LDCPrivateKey: values.LDCPrivateKey.trim(),
+      LDCMinTopUp: values.LDCMinTopUp,
+      LDCNotifyURL: values.LDCNotifyURL.trim(),
+      LDCReturnURL: values.LDCReturnURL.trim(),
       StripeApiSecret: values.StripeApiSecret.trim(),
       StripeWebhookSecret: values.StripeWebhookSecret.trim(),
       StripePriceId: values.StripePriceId.trim(),
@@ -471,6 +521,14 @@ export function PaymentSettingsSection({
       PayMethods: initialRef.current.PayMethods.trim(),
       AmountOptions: initialRef.current.AmountOptions.trim(),
       AmountDiscount: initialRef.current.AmountDiscount.trim(),
+      LDCEnabled: initialRef.current.LDCEnabled,
+      LDCBaseURL: removeTrailingSlash(initialRef.current.LDCBaseURL.trim()),
+      LDCClientID: initialRef.current.LDCClientID.trim(),
+      LDCClientSecret: initialRef.current.LDCClientSecret.trim(),
+      LDCPrivateKey: initialRef.current.LDCPrivateKey.trim(),
+      LDCMinTopUp: initialRef.current.LDCMinTopUp,
+      LDCNotifyURL: initialRef.current.LDCNotifyURL.trim(),
+      LDCReturnURL: initialRef.current.LDCReturnURL.trim(),
       StripeApiSecret: initialRef.current.StripeApiSecret.trim(),
       StripeWebhookSecret: initialRef.current.StripeWebhookSecret.trim(),
       StripePriceId: initialRef.current.StripePriceId.trim(),
@@ -560,6 +618,37 @@ export function PaymentSettingsSection({
         key: 'payment_setting.amount_discount',
         value: sanitized.AmountDiscount,
       })
+    }
+    if (sanitized.LDCEnabled !== initial.LDCEnabled) {
+      updates.push({ key: 'LDCEnabled', value: sanitized.LDCEnabled })
+    }
+
+    if (sanitized.LDCBaseURL !== initial.LDCBaseURL) {
+      updates.push({ key: 'LDCBaseURL', value: sanitized.LDCBaseURL })
+    }
+
+    if (sanitized.LDCClientID !== initial.LDCClientID) {
+      updates.push({ key: 'LDCClientID', value: sanitized.LDCClientID })
+    }
+
+    if (sanitized.LDCClientSecret) {
+      updates.push({ key: 'LDCClientSecret', value: sanitized.LDCClientSecret })
+    }
+
+    if (sanitized.LDCPrivateKey) {
+      updates.push({ key: 'LDCPrivateKey', value: sanitized.LDCPrivateKey })
+    }
+
+    if (sanitized.LDCMinTopUp !== initial.LDCMinTopUp) {
+      updates.push({ key: 'LDCMinTopUp', value: sanitized.LDCMinTopUp })
+    }
+
+    if (sanitized.LDCNotifyURL !== initial.LDCNotifyURL) {
+      updates.push({ key: 'LDCNotifyURL', value: sanitized.LDCNotifyURL })
+    }
+
+    if (sanitized.LDCReturnURL !== initial.LDCReturnURL) {
+      updates.push({ key: 'LDCReturnURL', value: sanitized.LDCReturnURL })
     }
 
     if (
@@ -809,11 +898,6 @@ export function PaymentSettingsSection({
                   'Payment, redemption codes, subscription plans, and invitation rewards are locked until the root administrator confirms the compliance terms.'
                 )}
               </p>
-              <ol className='list-decimal space-y-1 pl-5'>
-                {complianceStatements.map((statement) => (
-                  <li key={statement}>{statement}</li>
-                ))}
-              </ol>
             </div>
           </AlertDescription>
           <AlertAction>
@@ -877,9 +961,10 @@ export function PaymentSettingsSection({
           />
           <Tabs defaultValue='general' className='min-w-0'>
             <div className='overflow-x-auto pb-1'>
-              <TabsList className='grid min-w-[44rem] grid-cols-6'>
+              <TabsList className='grid min-w-[44rem] grid-cols-7'>
                 <TabsTrigger value='general'>{t('General')}</TabsTrigger>
                 <TabsTrigger value='epay'>Epay</TabsTrigger>
+                <TabsTrigger value='ldc'>LDC</TabsTrigger>
                 <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
                 <TabsTrigger value='creem'>Creem</TabsTrigger>
                 <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
@@ -1244,6 +1329,219 @@ export function PaymentSettingsSection({
                         </FormControl>
                         <FormDescription>
                           {t('Leave blank unless rotating the secret')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value='ldc' className={paymentTabContentClassName}>
+              <div className='space-y-4'>
+                <div>
+                  <h3 className='text-lg font-medium'>{t('LDC Gateway')}</h3>
+                  <p className='text-muted-foreground text-sm'>
+                    {t('Configuration for LINUX DO Credit payment integration')}
+                  </p>
+                </div>
+
+                <div className='rounded-md bg-violet-50 p-4 text-sm text-violet-900 dark:bg-violet-950 dark:text-violet-100'>
+                  <p className='mb-2 font-medium'>{t('LDC callback URL:')}</p>
+                  <code className='rounded bg-violet-100 px-1 py-0.5 text-xs dark:bg-violet-900'>
+                    {'<ServerAddress>/api/ldc/notify'}
+                  </code>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name='LDCEnabled'
+                  render={({ field }) => (
+                    <SettingsSwitchItem>
+                      <SettingsSwitchContent>
+                        <FormLabel>{t('Enable LDC')}</FormLabel>
+                        <FormDescription>
+                          {t(
+                            'Enable LINUX DO Credit after the client credentials and signing key are configured.'
+                          )}
+                        </FormDescription>
+                      </SettingsSwitchContent>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </SettingsSwitchItem>
+                  )}
+                />
+
+                <div className='grid gap-6 md:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='LDCBaseURL'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC endpoint')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='https://credit.linux.do/epay'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('The LINUX DO Credit EPay-compatible base URL.')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='LDCClientID'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC client ID')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={t('Enter client ID')}
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='LDCClientSecret'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC client secret')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='password'
+                            placeholder={t('Enter new secret to update')}
+                            autoComplete='new-password'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('Leave blank unless rotating the client secret.')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='LDCPrivateKey'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC Ed25519 private key')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='password'
+                            placeholder={t('Enter new private key to update')}
+                            autoComplete='new-password'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'Use an Ed25519 PKCS#8 PEM, base64, or hexadecimal private key.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='LDCMinTopUp'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC minimum top-up')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            min={1}
+                            step={1}
+                            {...safeNumberFieldProps(field)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'Smallest balance amount users can recharge through LDC.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='LDCNotifyURL'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC notify URL')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={t(
+                              'Leave blank to use the default callback URL'
+                            )}
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'Optional public URL registered with LINUX DO Credit.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='LDCReturnURL'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('LDC return URL')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={t(
+                              'Leave blank to return to the wallet'
+                            )}
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('Optional browser return URL after the payment.')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

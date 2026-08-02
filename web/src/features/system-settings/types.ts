@@ -287,6 +287,14 @@ export type BillingSettings = {
   PayAddress: string
   EpayId: string
   EpayKey: string
+  LDCEnabled: boolean
+  LDCBaseURL: string
+  LDCClientID: string
+  LDCClientSecret: string
+  LDCPrivateKey: string
+  LDCMinTopUp: number
+  LDCNotifyURL: string
+  LDCReturnURL: string
   Price: number
   MinTopUp: number
   CustomCallbackAddress: string

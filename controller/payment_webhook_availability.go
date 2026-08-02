@@ -108,3 +108,17 @@ func isEpayWebhookConfigured() bool {
 func isEpayWebhookEnabled() bool {
 	return isEpayTopUpEnabled()
 }
+
+func isLDCTopUpEnabled() bool {
+	if !isPaymentComplianceConfirmed() || !setting.LDCEnabled {
+		return false
+	}
+	return strings.TrimSpace(setting.LDCClientID) != "" &&
+		strings.TrimSpace(setting.LDCClientSecret) != "" &&
+		strings.TrimSpace(setting.LDCPrivateKey) != "" &&
+		setting.LDCMinTopUp > 0
+}
+
+func isLDCWebhookEnabled() bool {
+	return isLDCTopUpEnabled()
+}

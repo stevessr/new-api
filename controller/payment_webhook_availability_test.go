@@ -167,3 +167,32 @@ func TestEpayWebhookEnabledRequiresTopUpAndWebhookConfig(t *testing.T) {
 	operation_setting.PayMethods = nil
 	require.False(t, isEpayWebhookEnabled())
 }
+
+func TestLDCWebhookEnabledRequiresExplicitConfiguration(t *testing.T) {
+	confirmPaymentComplianceForTest(t)
+	originalEnabled := setting.LDCEnabled
+	originalClientID := setting.LDCClientID
+	originalClientSecret := setting.LDCClientSecret
+	originalPrivateKey := setting.LDCPrivateKey
+	originalMinTopUp := setting.LDCMinTopUp
+	t.Cleanup(func() {
+		setting.LDCEnabled = originalEnabled
+		setting.LDCClientID = originalClientID
+		setting.LDCClientSecret = originalClientSecret
+		setting.LDCPrivateKey = originalPrivateKey
+		setting.LDCMinTopUp = originalMinTopUp
+	})
+
+	setting.LDCEnabled = true
+	setting.LDCClientID = "client"
+	setting.LDCClientSecret = ""
+	setting.LDCPrivateKey = "private"
+	setting.LDCMinTopUp = 1
+	require.False(t, isLDCWebhookEnabled())
+
+	setting.LDCClientSecret = "secret"
+	require.True(t, isLDCWebhookEnabled())
+
+	setting.LDCEnabled = false
+	require.False(t, isLDCWebhookEnabled())
+}
