@@ -1393,7 +1393,9 @@ export function PaymentSettingsSection({
                           />
                         </FormControl>
                         <FormDescription>
-                          {t('The LINUX DO Credit EPay-compatible base URL.')}
+                          {t(
+                            'The official LINUX DO Credit native API base URL; leave the default unless using a custom endpoint.'
+                          )}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

@@ -2521,6 +2521,7 @@
     "Enable LINUX DO Credit after the client credentials and signing key are configured.": "Enable LINUX DO Credit after the client credentials and signing key are configured.",
     "Configuration for LINUX DO Credit payment integration": "Configuration for LINUX DO Credit payment integration",
     "The LINUX DO Credit EPay-compatible base URL.": "The LINUX DO Credit EPay-compatible base URL.",
+    "The official LINUX DO Credit native API base URL; leave the default unless using a custom endpoint.": "官方 LINUX DO Credit 原生 API 基礎 URL；除非使用自訂端點，否則請保留預設值。",
     "Enter client ID": "Enter client ID",
     "Enter new secret to update": "Enter new secret to update",
     "Leave blank unless rotating the client secret.": "Leave blank unless rotating the client secret.",

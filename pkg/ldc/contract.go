@@ -22,8 +22,11 @@ import (
 )
 
 const (
-	PaymentType    = "ldcpay"
-	TradeStatusOK  = "TRADE_SUCCESS"
+	PaymentType   = "ldcpay"
+	TradeStatusOK = "TRADE_SUCCESS"
+
+	// DefaultBaseURL is the official native LINUX DO Credit gateway base URL.
+	// Callers may override it through Config.BaseURL.
 	DefaultBaseURL = "https://credit.linux.do/epay"
 )
 

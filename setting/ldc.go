@@ -1,8 +1,8 @@
 package setting
 
-const (
-	DefaultLDCBaseURL = "https://credit.linux.do/epay"
-)
+// DefaultLDCBaseURL is the official native LINUX DO Credit gateway base URL.
+// LDCBaseURL may override it for a compatible or self-hosted endpoint.
+const DefaultLDCBaseURL = "https://credit.linux.do/epay"
 
 var (
 	LDCEnabled      = false

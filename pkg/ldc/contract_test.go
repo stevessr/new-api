@@ -24,10 +24,23 @@ func testPrivateKey() ed25519.PrivateKey {
 	return ed25519.NewKeyFromSeed(seed)
 }
 
+func TestNewClientUsesOfficialNativeDefaultURL(t *testing.T) {
+	privateKey := testPrivateKey()
+	client, err := NewClient(Config{
+		ClientID:     "client-1",
+		ClientSecret: "secret",
+		PrivateKey:   base64.StdEncoding.EncodeToString(privateKey.Seed()),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, client.baseURL)
+	assert.Equal(t, DefaultBaseURL, client.baseURL.String())
+}
+
 func TestCreateOrderSignsRequestAndResolvesCheckoutURL(t *testing.T) {
 	privateKey := testPrivateKey()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodPost, r.Method)
+		require.Equal(t, "/epay/pay/submit.php", r.URL.Path)
 		require.NoError(t, r.ParseForm())
 
 		expected := map[string]string{
