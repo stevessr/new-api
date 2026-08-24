@@ -674,9 +674,9 @@ function buildSettingsJSON(formData: ChannelFormValues): string {
   }
 
   // Field passthrough controls:
-  // - OpenAI, Anthropic, Codex, and New API: allow_service_tier
-  // - OpenAI request fields: OpenAI, Codex, and New API
-  // - Claude request fields: Anthropic and New API
+  // - FIELD_PASSTHROUGH_TYPES: allow_service_tier
+  // - OPENAI_FIELD_PASSTHROUGH_TYPES: native OpenAI request fields
+  // - CLAUDE_FIELD_PASSTHROUGH_TYPES: native Claude request fields
   if (FIELD_PASSTHROUGH_TYPES.has(formData.type)) {
     settingsObj.allow_service_tier = formData.allow_service_tier === true
   } else if ('allow_service_tier' in settingsObj) {

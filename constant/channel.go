@@ -58,6 +58,7 @@ const (
 	ChannelTypeAdvancedCustom = 58
 	ChannelTypeSub2API        = 59
 	ChannelTypeNewAPI         = 60
+	ChannelTypeOpenAIResponse = 61
 	ChannelTypeDummy          // this one is only for count, do not add any channel after this
 
 )
@@ -86,44 +87,45 @@ var ChannelBaseURLs = []string{
 	"https://openrouter.ai/api",           // 20
 	"https://api.aiproxy.io",              // 21
 	"https://fastgpt.run/api/openapi",     // 22
-	"https://hunyuan.tencentcloudapi.com", //23
-	"https://generativelanguage.googleapis.com", //24
-	"https://api.moonshot.cn",                   //25
-	"https://open.bigmodel.cn",                  //26
-	"https://api.perplexity.ai",                 //27
-	"",                                          //28
-	"",                                          //29
-	"",                                          //30
-	"https://api.lingyiwanwu.com",               //31
-	"",                                          //32
-	"",                                          //33
-	"https://api.cohere.ai",                     //34
-	"https://api.minimax.chat",                  //35
-	"",                                          //36
-	"https://api.dify.ai",                       //37
-	"https://api.jina.ai",                       //38
-	"https://api.cloudflare.com",                //39
-	"https://api.siliconflow.cn",                //40
-	"",                                          //41
-	"https://api.mistral.ai",                    //42
-	"https://api.deepseek.com",                  //43
-	"https://api.moka.ai",                       //44
-	"https://ark.cn-beijing.volces.com",         //45
-	"https://qianfan.baidubce.com",              //46
-	"",                                          //47
-	"https://api.x.ai",                          //48
-	"https://api.coze.cn",                       //49
-	"https://api.klingai.com",                   //50
-	"https://visual.volcengineapi.com",          //51
-	"https://api.vidu.cn",                       //52
-	"https://llm.submodel.ai",                   //53
-	"https://ark.cn-beijing.volces.com",         //54
-	"https://api.openai.com",                    //55
-	"https://api.replicate.com",                 //56
-	"https://chatgpt.com",                       //57
-	"",                                          //58
-	"",                                          //59
-	"",                                          //60
+	"https://hunyuan.tencentcloudapi.com", // 23
+	"https://generativelanguage.googleapis.com", // 24
+	"https://api.moonshot.cn",                   // 25
+	"https://open.bigmodel.cn",                  // 26
+	"https://api.perplexity.ai",                 // 27
+	"",                                          // 28
+	"",                                          // 29
+	"",                                          // 30
+	"https://api.lingyiwanwu.com",               // 31
+	"",                                          // 32
+	"",                                          // 33
+	"https://api.cohere.ai",                     // 34
+	"https://api.minimax.chat",                  // 35
+	"",                                          // 36
+	"https://api.dify.ai",                       // 37
+	"https://api.jina.ai",                       // 38
+	"https://api.cloudflare.com",                // 39
+	"https://api.siliconflow.cn",                // 40
+	"",                                          // 41
+	"https://api.mistral.ai",                    // 42
+	"https://api.deepseek.com",                  // 43
+	"https://api.moka.ai",                       // 44
+	"https://ark.cn-beijing.volces.com",         // 45
+	"https://qianfan.baidubce.com",              // 46
+	"",                                          // 47
+	"https://api.x.ai",                          // 48
+	"https://api.coze.cn",                       // 49
+	"https://api.klingai.com",                   // 50
+	"https://visual.volcengineapi.com",          // 51
+	"https://api.vidu.cn",                       // 52
+	"https://llm.submodel.ai",                   // 53
+	"https://ark.cn-beijing.volces.com",         // 54
+	"https://api.openai.com",                    // 55
+	"https://api.replicate.com",                 // 56
+	"https://chatgpt.com",                       // 57
+	"",                                          // 58
+	"",                                          // 59
+	"",                                          // 60
+	"https://api.openai.com",                    // 61
 }
 
 var ChannelTypeNames = map[int]string{
@@ -183,6 +185,7 @@ var ChannelTypeNames = map[int]string{
 	ChannelTypeCodex:          "ChatGPT Subscription (Codex)",
 	ChannelTypeAdvancedCustom: "Advanced Custom",
 	ChannelTypeSub2API:        "Sub2API",
+	ChannelTypeOpenAIResponse: "OpenAI Responses",
 	ChannelTypeNewAPI:         "New API",
 }
 

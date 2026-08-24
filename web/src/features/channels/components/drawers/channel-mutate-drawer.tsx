@@ -148,6 +148,7 @@ import {
   FIELD_PLACEHOLDERS,
   MODEL_FETCHABLE_TYPES,
   OPENAI_FIELD_PASSTHROUGH_TYPES,
+  OPENAI_NATIVE_CHANNEL_TYPES,
 } from '../../constants'
 import { useChannelMutateForm } from '../../hooks/use-channel-mutate-form'
 import {
@@ -757,6 +758,8 @@ export function ChannelMutateDrawer({
   const currentHttp2ConnectionShards = form.watch('http2_connection_shards')
   const currentSystemPrompt = form.watch('system_prompt')
   const currentSystemPromptOverride = form.watch('system_prompt_override')
+
+  const isOpenAINativeChannel = OPENAI_NATIVE_CHANNEL_TYPES.has(currentType)
   const currentAllowServiceTier = form.watch('allow_service_tier')
   const currentDisableStore = form.watch('disable_store')
   const currentAllowSafetyIdentifier = form.watch('allow_safety_identifier')
@@ -2074,7 +2077,7 @@ export function ChannelMutateDrawer({
                           />
                         )}
 
-                        {currentType === 1 && (
+                        {isOpenAINativeChannel && (
                           <fieldset
                             disabled={sensitiveLocked}
                             className='disabled:opacity-60'
@@ -4073,7 +4076,7 @@ export function ChannelMutateDrawer({
                             className='space-y-4 disabled:opacity-60'
                           >
                             <div className='divide-border space-y-0 divide-y border-y'>
-                              {currentType === 1 && (
+                              {isOpenAINativeChannel && (
                                 <FormField
                                   control={form.control}
                                   name='force_format'

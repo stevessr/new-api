@@ -65,6 +65,8 @@ func GetAdaptor(apiType int) channel.Adaptor {
 		return &gemini.Adaptor{}
 	case constant.APITypeOpenAI:
 		return &openai.Adaptor{}
+	case constant.APITypeOpenAIResponse:
+		return &openai.Adaptor{}
 	case constant.APITypePaLM:
 		return &palm.Adaptor{}
 	case constant.APITypeTencent:
@@ -162,7 +164,7 @@ func GetTaskAdaptor(platform constant.TaskPlatform) channel.TaskAdaptor {
 			return &taskVidu.TaskAdaptor{}
 		case constant.ChannelTypeDoubaoVideo, constant.ChannelTypeVolcEngine:
 			return &taskdoubao.TaskAdaptor{}
-		case constant.ChannelTypeSora, constant.ChannelTypeOpenAI:
+		case constant.ChannelTypeSora, constant.ChannelTypeOpenAI, constant.ChannelTypeOpenAIResponse:
 			return &tasksora.TaskAdaptor{}
 		case constant.ChannelTypeGemini:
 			return &taskGemini.TaskAdaptor{}

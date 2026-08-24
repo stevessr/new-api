@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CHANNEL_TYPES } from '../constants'
+import { CHANNEL_TYPES, CHANNEL_TYPE_OPENAI_RESPONSE } from '../constants'
 
 // ============================================================================
 // Channel Type Configuration
@@ -61,6 +61,13 @@ export const CHANNEL_TYPE_CONFIGS: Record<number, ChannelTypeConfig> = {
       keyFormat: /^sk-/,
       keyMinLength: 20,
     },
+  },
+  [CHANNEL_TYPE_OPENAI_RESPONSE]: {
+    id: CHANNEL_TYPE_OPENAI_RESPONSE,
+    name: CHANNEL_TYPES[CHANNEL_TYPE_OPENAI_RESPONSE],
+    icon: 'openai',
+    defaultBaseUrl: 'https://api.openai.com',
+    requiresOrganization: true,
   },
   3: {
     id: 3,

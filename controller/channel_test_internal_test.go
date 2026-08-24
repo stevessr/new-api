@@ -97,6 +97,22 @@ func TestNewAPIChannelRegistration(t *testing.T) {
 	assert.Empty(t, constant.ChannelBaseURLs[constant.ChannelTypeNewAPI])
 }
 
+func TestOpenAIResponseChannelRegistration(t *testing.T) {
+	apiType, ok := common.ChannelType2APIType(constant.ChannelTypeOpenAIResponse)
+
+	require.True(t, ok)
+	assert.Equal(t, constant.APITypeOpenAIResponse, apiType)
+	assert.Equal(t, "OpenAI Responses", constant.GetChannelTypeName(constant.ChannelTypeOpenAIResponse))
+	require.Greater(t, len(constant.ChannelBaseURLs), constant.ChannelTypeOpenAIResponse)
+	assert.Equal(t, "https://api.openai.com", constant.ChannelBaseURLs[constant.ChannelTypeOpenAIResponse])
+	assert.Equal(t, string(constant.EndpointTypeOpenAIResponse), normalizeChannelTestEndpoint(&model.Channel{Type: constant.ChannelTypeOpenAIResponse}, ""))
+	assert.Equal(t, []constant.EndpointType{
+		constant.EndpointTypeOpenAIResponse,
+		constant.EndpointTypeOpenAIResponseCompact,
+		constant.EndpointTypeOpenAI,
+	}, common.GetEndpointTypesByChannelType(constant.ChannelTypeOpenAIResponse, "gpt-5"))
+}
+
 func TestResponsesCompactChannelSupport(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -105,6 +121,7 @@ func TestResponsesCompactChannelSupport(t *testing.T) {
 		want        bool
 	}{
 		{name: "OpenAI", channelType: constant.ChannelTypeOpenAI, apiType: constant.APITypeOpenAI, want: true},
+		{name: "OpenAI Responses", channelType: constant.ChannelTypeOpenAIResponse, apiType: constant.APITypeOpenAIResponse, want: true},
 		{name: "Azure", channelType: constant.ChannelTypeAzure, apiType: constant.APITypeOpenAI, want: true},
 		{name: "Codex", channelType: constant.ChannelTypeCodex, apiType: constant.APITypeCodex, want: true},
 		{name: "Advanced Custom", channelType: constant.ChannelTypeAdvancedCustom, apiType: constant.APITypeAdvancedCustom, want: true},
