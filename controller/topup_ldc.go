@@ -99,6 +99,9 @@ func requestLDCOrder(c *gin.Context, req EpayRequest) {
 	}
 
 	id := c.GetInt("id")
+	if rejectInvalidTopUpQuota(c, id, req.Amount) {
+		return
+	}
 	group, err := model.GetUserGroup(id, true)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "获取用户分组失败"})
@@ -231,53 +234,8 @@ func completeLDCOrder(c *gin.Context, notification ldc.Notification, params url.
 		)
 	}
 
-	topUp := model.GetTopUpByTradeNo(notification.ServiceTradeNo)
-	if topUp == nil {
-		return model.ErrTopUpNotFound
-	}
-	if topUp.PaymentProvider != model.PaymentProviderLDC {
-		return model.ErrPaymentMethodMismatch
-	}
-	if !ldcMoneyMatches(topUp.Money, notification.Money) {
-		return errors.New("LDC top-up payment amount mismatch")
-	}
-	if topUp.Status == common.TopUpStatusSuccess {
-		return nil
-	}
-	if topUp.Status != common.TopUpStatusPending {
-		return model.ErrTopUpStatusInvalid
-	}
-
-	quota, clamp := common.QuotaFromDecimalChecked(decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)))
-	if clamp != nil {
-		return errors.New("LDC top-up quota is out of range")
-	}
-	if quota <= 0 {
-		return errors.New("LDC top-up quota is invalid")
-	}
-	if err := model.UpdatePendingTopUpStatus(topUp.TradeNo, model.PaymentProviderLDC, common.TopUpStatusSuccess); err != nil {
-		if errors.Is(err, model.ErrTopUpStatusInvalid) {
-			if current := model.GetTopUpByTradeNo(notification.ServiceTradeNo); current != nil && current.Status == common.TopUpStatusSuccess {
-				return nil
-			}
-		}
-		return err
-	}
-	if err := model.IncreaseUserQuota(topUp.UserId, quota, true); err != nil {
-		return err
-	}
-	logger.LogInfo(c.Request.Context(), fmt.Sprintf("LDC 充值成功 user_id=%d trade_no=%s quota=%d money=%.2f", topUp.UserId, topUp.TradeNo, quota, topUp.Money))
-	model.RecordTopupLog(
-		topUp.UserId,
-		common.NewMessage("使用 LDC 充值成功，充值金额: {{quota}}，支付金额：{{amount}}", map[string]any{
-			"quota":  logger.FormatQuota(quota),
-			"amount": fmt.Sprintf("%f", topUp.Money),
-		}),
-		c.ClientIP(),
-		topUp.PaymentMethod,
-		model.PaymentProviderLDC,
-	)
-	return nil
+	_, err := model.RechargeLDC(notification.ServiceTradeNo, notification.Money, c.ClientIP())
+	return err
 }
 
 func ldcMoneyMatches(expected float64, actual string) bool {
