@@ -7360,6 +7360,11 @@
     "Leave blank to use the default callback URL": "Leave blank to use the default callback URL",
     "Optional public URL registered with LINUX DO Credit.": "Optional public URL registered with LINUX DO Credit.",
     "Leave blank to return to the wallet": "Leave blank to return to the wallet",
-    "Optional browser return URL after the payment.": "Optional browser return URL after the payment."
+    "Optional browser return URL after the payment.": "Optional browser return URL after the payment.",
+    "Metadata source": "メタデータの取得元",
+    "models.dev (bundled at build)": "models.dev（ビルド時に組み込み）",
+    "Offline model metadata snapshot generated when packaging.": "パッケージ作成時に生成したオフラインのモデルメタデータです。",
+    "Prices and endpoint settings are not imported.": "料金やエンドポイント設定は取り込みません。",
+    "Snapshot date": "スナップショット日時"
   }
 }

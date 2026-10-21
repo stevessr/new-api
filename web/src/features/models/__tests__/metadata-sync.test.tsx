@@ -28,6 +28,7 @@ import type { MetadataSyncCandidate, MetadataSyncPreview } from '../types'
 
 const preview: MetadataSyncPreview = {
   source: {
+    source: 'official',
     locale: 'en',
     models_url: 'https://example.test/models.json',
     vendors_url: 'https://example.test/vendors.json',
@@ -63,6 +64,42 @@ const preview: MetadataSyncPreview = {
 }
 
 describe('metadata sync preview', () => {
+  it('loads the packaged models.dev source only after explicit selection', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          ...preview,
+          source: {
+            ...preview.source,
+            source: 'modelsdev',
+            generated_at: '2026-10-21T00:00:00Z',
+          },
+        },
+      },
+    })
+    const client = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    })
+    render(
+      <QueryClientProvider client={client}>
+        <SyncWizardDialog open onOpenChange={() => {}} />
+      </QueryClientProvider>
+    )
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('combobox', { name: 'Metadata source' }))
+    await user.click(
+      screen.getByRole('option', { name: 'models.dev (bundled at build)' })
+    )
+    expect(screen.getByText(/Prices and endpoint settings are not imported/)).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Load metadata preview' }))
+    await screen.findByText('2026-10-21T00:00:00Z', { exact: false })
+    expect(get).toHaveBeenCalledWith(
+      '/api/models/sync_upstream/preview?locale=en&source=modelsdev'
+    )
+    client.clear()
+  })
+
   it('shows additions and field effects and writes only after explicit confirmation', async () => {
     vi.spyOn(api, 'get').mockResolvedValue({
       data: { success: true, data: preview },
@@ -132,6 +169,7 @@ describe('metadata sync preview', () => {
     )
     await screen.findByText('Metadata sync completed')
     expect(post).toHaveBeenCalledWith('/api/models/sync_upstream', {
+      source: 'official',
       locale: 'en',
       source_version: 'source-v1',
       selections: [
@@ -267,6 +305,7 @@ describe('metadata sync preview', () => {
     )
     await screen.findByText('Metadata sync completed')
     expect(post).toHaveBeenCalledWith('/api/models/sync_upstream', {
+      source: 'official',
       locale: 'en',
       source_version: 'source-v1',
       selections: syncable.map((item) => ({
@@ -397,6 +436,7 @@ describe('metadata sync preview', () => {
     )
     await screen.findByText('Metadata sync completed')
     expect(post).toHaveBeenCalledWith('/api/models/sync_upstream', {
+      source: 'official',
       locale: 'en',
       source_version: 'source-v1',
       selections: [

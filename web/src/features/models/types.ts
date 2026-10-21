@@ -205,6 +205,8 @@ export type MetadataSyncCandidate = {
 }
 export type MetadataSyncSource = {
   locale: SyncLocale
+  source: SyncSource
+  generated_at?: string
   models_url: string
   vendors_url: string
   version: string
@@ -220,6 +222,7 @@ export type MetadataSyncSelection = {
   fields: MetadataSyncField[]
 }
 export type MetadataSyncRequest = {
+  source: SyncSource
   locale: SyncLocale
   source_version: string
   selections: MetadataSyncSelection[]
@@ -340,7 +343,7 @@ export type SyncLocale = 'zh' | 'zh-CN' | 'en' | 'ja'
 /**
  * Sync upstream source
  */
-export type SyncSource = 'official'
+export type SyncSource = 'official' | 'modelsdev'
 
 // ============================================================================
 // Model Deployments Types

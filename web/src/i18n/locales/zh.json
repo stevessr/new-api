@@ -7360,6 +7360,11 @@
     "Leave blank to use the default callback URL": "留空以使用默认回调地址",
     "Optional public URL registered with LINUX DO Credit.": "向 LINUX DO Credit 注册的可选公网地址。",
     "Leave blank to return to the wallet": "留空以返回钱包",
-    "Optional browser return URL after the payment.": "支付后的可选浏览器回跳地址。"
+    "Optional browser return URL after the payment.": "支付后的可选浏览器回跳地址。",
+    "Metadata source": "元数据来源",
+    "models.dev (bundled at build)": "models.dev（构建时内置）",
+    "Offline model metadata snapshot generated when packaging.": "打包时生成的离线模型元数据快照。",
+    "Prices and endpoint settings are not imported.": "不会导入定价，也不会覆盖端点设置。",
+    "Snapshot date": "快照日期"
   }
 }

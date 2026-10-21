@@ -230,10 +230,12 @@ func fetchJSON[T any](ctx context.Context, url string, out *upstreamEnvelope[T])
 }
 
 type metadataSyncSource struct {
-	Locale     string `json:"locale"`
-	ModelsURL  string `json:"models_url"`
-	VendorsURL string `json:"vendors_url"`
-	Version    string `json:"version"`
+	Source      string `json:"source"`
+	Locale      string `json:"locale"`
+	ModelsURL   string `json:"models_url"`
+	VendorsURL  string `json:"vendors_url"`
+	Version     string `json:"version"`
+	GeneratedAt string `json:"generated_at,omitempty"`
 }
 
 type metadataSyncField struct {
@@ -252,13 +254,20 @@ type metadataSyncCandidate struct {
 	VendorToCreate string                `json:"vendor_to_create,omitempty"`
 }
 
-func fetchMetadataCatalog(c *gin.Context, locale string) (metadataSyncSource, map[string]model.MetadataValues, map[string]model.Vendor, error) {
+func fetchMetadataCatalog(c *gin.Context, locale string, sourceName string) (metadataSyncSource, map[string]model.MetadataValues, map[string]model.Vendor, error) {
 	resolved, valid := normalizeLocale(locale)
 	if !valid {
 		return metadataSyncSource{}, nil, nil, errors.New("unsupported metadata language")
 	}
+	if sourceName == "modelsdev" {
+		// The packaged catalog is English-only regardless of the UI language.
+		return bundledModelsDevCatalog("en", modelsDevSnapshotBytes)
+	}
+	if sourceName != "" && sourceName != "official" {
+		return metadataSyncSource{}, nil, nil, errors.New("unsupported metadata source")
+	}
 	modelsURL, vendorsURL := getUpstreamURLs(resolved)
-	source := metadataSyncSource{Locale: resolved, ModelsURL: modelsURL, VendorsURL: vendorsURL}
+	source := metadataSyncSource{Source: "official", Locale: resolved, ModelsURL: modelsURL, VendorsURL: vendorsURL}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(common.GetEnvOrDefault("SYNC_HTTP_TIMEOUT_SECONDS", 15))*time.Second)
 	defer cancel()
 	var modelsEnv upstreamEnvelope[upstreamModel]
@@ -315,7 +324,7 @@ func fetchMetadataCatalog(c *gin.Context, locale string) (metadataSyncSource, ma
 }
 
 func SyncUpstreamPreview(c *gin.Context) {
-	source, upstream, upstreamVendors, err := fetchMetadataCatalog(c, c.Query("locale"))
+	source, upstream, upstreamVendors, err := fetchMetadataCatalog(c, c.Query("locale"), c.Query("source"))
 	if err != nil {
 		common.ApiError(c, err)
 		return
@@ -398,6 +407,12 @@ func SyncUpstreamPreview(c *gin.Context) {
 		_ = common.Unmarshal(localRaw, &localFields)
 		_ = common.Unmarshal(upRaw, &upFields)
 		for _, field := range model.MetadataSyncFields {
+			// models.dev describes model capabilities, not New API routing or visibility.
+			// Preserve locally configured endpoint protocols and catalog settings.
+			if source.Source == "modelsdev" && local != nil &&
+				field != "description" && field != "tags" && field != "vendor" {
+				continue
+			}
 			if local == nil || localFields[field] != upFields[field] {
 				candidate.Fields = append(candidate.Fields, metadataSyncField{Field: field, Local: localFields[field], Upstream: upFields[field]})
 			}
@@ -414,13 +429,14 @@ func SyncUpstreamModels(c *gin.Context) {
 	var request struct {
 		Locale        string                        `json:"locale"`
 		SourceVersion string                        `json:"source_version"`
+		Source        string                        `json:"source"`
 		Selections    []model.MetadataSyncSelection `json:"selections"`
 	}
 	if err := common.DecodeJson(c.Request.Body, &request); err != nil || len(request.Selections) == 0 || request.SourceVersion == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Preview and select metadata changes before applying"})
 		return
 	}
-	source, upstream, vendors, err := fetchMetadataCatalog(c, request.Locale)
+	source, upstream, vendors, err := fetchMetadataCatalog(c, request.Locale, request.Source)
 	if err != nil {
 		common.ApiError(c, err)
 		return
@@ -431,6 +447,16 @@ func SyncUpstreamModels(c *gin.Context) {
 	}
 	updates := make([]model.MetadataSyncUpdate, 0, len(request.Selections))
 	for _, selection := range request.Selections {
+		// Do not trust fields supplied by the client: models.dev is only a
+		// descriptive source and may never update routing or visibility.
+		if source.Source == "modelsdev" && !selection.Create {
+			for _, field := range selection.Fields {
+				if !allowedModelsDevUpdateField(field) {
+					c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "models.dev can only update description, tags, and vendor"})
+					return
+				}
+			}
+		}
 		values, exists := upstream[selection.ModelName]
 		if !exists {
 			c.JSON(http.StatusConflict, gin.H{"success": false, "message": "Selected upstream model is no longer available"})

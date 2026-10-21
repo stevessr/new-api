@@ -7360,6 +7360,11 @@
     "Leave blank to use the default callback URL": "Leave blank to use the default callback URL",
     "Optional public URL registered with LINUX DO Credit.": "Optional public URL registered with LINUX DO Credit.",
     "Leave blank to return to the wallet": "Leave blank to return to the wallet",
-    "Optional browser return URL after the payment.": "Optional browser return URL after the payment."
+    "Optional browser return URL after the payment.": "Optional browser return URL after the payment.",
+    "Metadata source": "Nguồn siêu dữ liệu",
+    "models.dev (bundled at build)": "models.dev (nhúng khi đóng gói)",
+    "Offline model metadata snapshot generated when packaging.": "Bản dữ liệu mô hình ngoại tuyến được tạo khi đóng gói.",
+    "Prices and endpoint settings are not imported.": "Không nhập giá và cấu hình điểm cuối.",
+    "Snapshot date": "Ngày tạo bản dữ liệu"
   }
 }
