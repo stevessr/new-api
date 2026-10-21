@@ -447,6 +447,16 @@ func SyncUpstreamModels(c *gin.Context) {
 	}
 	updates := make([]model.MetadataSyncUpdate, 0, len(request.Selections))
 	for _, selection := range request.Selections {
+		// Do not trust fields supplied by the client: models.dev is only a
+		// descriptive source and may never update routing or visibility.
+		if source.Source == "modelsdev" && !selection.Create {
+			for _, field := range selection.Fields {
+				if !allowedModelsDevUpdateField(field) {
+					c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "models.dev can only update description, tags, and vendor"})
+					return
+				}
+			}
+		}
 		values, exists := upstream[selection.ModelName]
 		if !exists {
 			c.JSON(http.StatusConflict, gin.H{"success": false, "message": "Selected upstream model is no longer available"})
