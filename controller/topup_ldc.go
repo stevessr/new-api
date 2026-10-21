@@ -269,7 +269,10 @@ func completeLDCOrder(c *gin.Context, notification ldc.Notification, params url.
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("LDC 充值成功 user_id=%d trade_no=%s quota=%d money=%.2f", topUp.UserId, topUp.TradeNo, quota, topUp.Money))
 	model.RecordTopupLog(
 		topUp.UserId,
-		fmt.Sprintf("使用 LDC 充值成功，充值金额: %v，支付金额：%f", logger.LogQuota(quota), topUp.Money),
+		common.NewMessage("使用 LDC 充值成功，充值金额: {{quota}}，支付金额：{{amount}}", map[string]any{
+			"quota":  logger.FormatQuota(quota),
+			"amount": fmt.Sprintf("%f", topUp.Money),
+		}),
 		c.ClientIP(),
 		topUp.PaymentMethod,
 		model.PaymentProviderLDC,
