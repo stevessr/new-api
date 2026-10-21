@@ -7360,6 +7360,11 @@
     "Leave blank to use the default callback URL": "Leave blank to use the default callback URL",
     "Optional public URL registered with LINUX DO Credit.": "Optional public URL registered with LINUX DO Credit.",
     "Leave blank to return to the wallet": "Leave blank to return to the wallet",
-    "Optional browser return URL after the payment.": "Optional browser return URL after the payment."
+    "Optional browser return URL after the payment.": "Optional browser return URL after the payment.",
+    "Metadata source": "Source des métadonnées",
+    "models.dev (bundled at build)": "models.dev (intégré à la compilation)",
+    "Offline model metadata snapshot generated when packaging.": "Instantané hors ligne des métadonnées généré lors de la compilation.",
+    "Prices and endpoint settings are not imported.": "Les prix et les paramètres des points de terminaison ne sont pas importés.",
+    "Snapshot date": "Date de l'instantané"
   }
 }
