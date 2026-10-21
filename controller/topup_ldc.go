@@ -130,18 +130,6 @@ func requestLDCOrder(c *gin.Context, req EpayRequest) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "回调地址配置错误"})
 		return
 	}
-	checkoutURL, err := client.CreateOrder(c.Request.Context(), ldc.CreateOrderRequest{
-		ServiceTradeNo: tradeNo,
-		OrderName:      fmt.Sprintf("TUC%d", req.Amount),
-		Amount:         strconv.FormatFloat(payMoney, 'f', 2, 64),
-		NotifyURL:      notifyURL.String(),
-		ReturnURL:      returnURL.String(),
-	})
-	if err != nil {
-		logger.LogError(c.Request.Context(), fmt.Sprintf("LDC 拉起支付失败 user_id=%d trade_no=%s amount=%d error=%q", id, tradeNo, req.Amount, err.Error()))
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "拉起支付失败"})
-		return
-	}
 
 	amount := req.Amount
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
@@ -162,6 +150,20 @@ func requestLDCOrder(c *gin.Context, req EpayRequest) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "创建订单失败"})
 		return
 	}
+	checkoutURL, err := client.CreateOrder(c.Request.Context(), ldc.CreateOrderRequest{
+		ServiceTradeNo: tradeNo,
+		OrderName:      fmt.Sprintf("TUC%d", req.Amount),
+		Amount:         strconv.FormatFloat(payMoney, 'f', 2, 64),
+		NotifyURL:      notifyURL.String(),
+		ReturnURL:      returnURL.String(),
+	})
+	if err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("LDC 拉起支付失败 user_id=%d trade_no=%s amount=%d error=%q", id, tradeNo, req.Amount, err.Error()))
+		_ = model.UpdatePendingTopUpStatus(tradeNo, model.PaymentProviderLDC, common.TopUpStatusFailed)
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "拉起支付失败"})
+		return
+	}
+
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("LDC 充值订单创建成功 user_id=%d trade_no=%s amount=%d money=%.2f url=%q", id, tradeNo, req.Amount, payMoney, checkoutURL))
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{}, "url": checkoutURL})
 }
