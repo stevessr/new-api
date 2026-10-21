@@ -34,7 +34,7 @@ export function convertCatalog(catalog, generatedAt = new Date().toISOString()) 
     const vendorName = safeText(provider.name, 80) || providerID
     for (const [entryID, record] of Object.entries(provider.models)) {
       if (!record || typeof record !== 'object' || Array.isArray(record)) continue
-      const modelID = safeText(record.id || entryID, 128)
+      const modelID = safeText(record.id || entryID, 512)
       // New API model identifiers must fit its models.model_name varchar(128).
       if (!modelID || modelID.length > 128 || /[\u0000-\u001f]/.test(modelID)) continue
 
