@@ -77,3 +77,12 @@ func bundledModelsDevCatalog(locale string, raw []byte) (metadataSyncSource, map
 	}
 	return source, models, vendors, nil
 }
+
+func allowedModelsDevUpdateField(field string) bool {
+	switch field {
+	case "description", "tags", "vendor":
+		return true
+	default:
+		return false
+	}
+}
