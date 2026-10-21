@@ -28,6 +28,7 @@ import type { MetadataSyncCandidate, MetadataSyncPreview } from '../types'
 
 const preview: MetadataSyncPreview = {
   source: {
+    source: 'official',
     locale: 'en',
     models_url: 'https://example.test/models.json',
     vendors_url: 'https://example.test/vendors.json',
@@ -132,6 +133,7 @@ describe('metadata sync preview', () => {
     )
     await screen.findByText('Metadata sync completed')
     expect(post).toHaveBeenCalledWith('/api/models/sync_upstream', {
+      source: 'official',
       locale: 'en',
       source_version: 'source-v1',
       selections: [
@@ -267,6 +269,7 @@ describe('metadata sync preview', () => {
     )
     await screen.findByText('Metadata sync completed')
     expect(post).toHaveBeenCalledWith('/api/models/sync_upstream', {
+      source: 'official',
       locale: 'en',
       source_version: 'source-v1',
       selections: syncable.map((item) => ({
@@ -397,6 +400,7 @@ describe('metadata sync preview', () => {
     )
     await screen.findByText('Metadata sync completed')
     expect(post).toHaveBeenCalledWith('/api/models/sync_upstream', {
+      source: 'official',
       locale: 'en',
       source_version: 'source-v1',
       selections: [
