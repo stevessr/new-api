@@ -85,8 +85,11 @@ export function convertCatalog(catalog, generatedAt = new Date().toISOString()) 
 
   const models = [...chosen.values()].map(v => v.model).sort((a,b)=>a.model_name.localeCompare(b.model_name))
   const used = new Set(models.map(m => m.vendor_name))
-  const vendorList = [...vendors.values()].filter(v => used.has(v.name))
-    .sort((a,b)=>a.name.localeCompare(b.name))
+  // Multiple provider entries can have the same display name; keep one
+  // vendor record per name so the Go-side sync validation stays unambiguous.
+  const vendorList = [...new Map(
+    [...vendors.values()].filter(v => used.has(v.name)).map(v => [v.name, v]),
+  ).values()].sort((a,b)=>a.name.localeCompare(b.name))
   return {
     source_url: MODELS_DEV_API,
     generated_at: generatedAt,
