@@ -409,7 +409,10 @@ export function SyncWizardDialog(props: {
                 disabled={busy}
                 items={getSyncSourceOptions(t)}
                 onValueChange={(value) => {
-                  if (value) setSource(value as SyncSource)
+                  if (value) {
+                    setSource(value as SyncSource)
+                    if (value === 'modelsdev') setLocale('en')
+                  }
                   setPreview(null)
                   setSelection({})
                   setPage(0)
