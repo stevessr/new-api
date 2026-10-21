@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -232,6 +233,77 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 
 	common.SysLog(common.LogText("Epay top-up succeeded trade_no=%s user_id=%d quota_to_add=%d money=%.2f", topUp.TradeNo, topUp.UserId, quotaToAdd, topUp.Money))
 	RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentProviderEpay)
+	return false, nil
+}
+
+// RechargeLDC atomically settles a verified LDC top-up. The caller must verify
+// the gateway notification signature first. A database row lock and transaction
+// keep the order status and credited quota consistent across instances.
+func RechargeLDC(tradeNo string, signedAmount string, callerIP string) (alreadyDone bool, err error) {
+	if tradeNo == "" {
+		return false, errors.New("LDC trade number is empty")
+	}
+	paidAmount, err := decimal.NewFromString(strings.TrimSpace(signedAmount))
+	if err != nil || !paidAmount.IsPositive() {
+		return false, errors.New("invalid LDC payment amount")
+	}
+
+	refCol := "`trade_no`"
+	if common.UsingMainDatabase(common.DatabaseTypePostgreSQL) {
+		refCol = `"trade_no"`
+	}
+
+	var creditedQuota int
+	order := &TopUp{}
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		if err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(order).Error; err != nil {
+			return ErrTopUpNotFound
+		}
+		if order.PaymentProvider != PaymentProviderLDC {
+			return ErrPaymentMethodMismatch
+		}
+		if !decimal.NewFromFloat(order.Money).Round(2).Equal(paidAmount.Round(2)) {
+			return errors.New("LDC top-up payment amount mismatch")
+		}
+		if order.Status == common.TopUpStatusSuccess {
+			alreadyDone = true
+			return nil
+		}
+		if order.Status != common.TopUpStatusPending {
+			return ErrTopUpStatusInvalid
+		}
+
+		var quotaErr error
+		creditedQuota, quotaErr = common.WalletQuotaFromDecimalStrict(
+			decimal.NewFromInt(order.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)),
+		)
+		if quotaErr != nil || creditedQuota <= 0 {
+			return ErrInvalidTopUpQuota
+		}
+
+		order.CompleteTime = common.GetTimestamp()
+		order.Status = common.TopUpStatusSuccess
+		if err := tx.Save(order).Error; err != nil {
+			return err
+		}
+		return creditTopUpQuota(tx, order.UserId, creditedQuota, nil)
+	})
+	if err != nil {
+		return false, err
+	}
+	if alreadyDone {
+		return true, nil
+	}
+
+	syncCreditUserQuotaCache(order.UserId, creditedQuota, common.LogText("LDC topup"))
+	RecordTopupLog(
+		order.UserId,
+		common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{
+			"quota": logger.FormatQuota(creditedQuota),
+			"amount": fmt.Sprintf("%f", order.Money),
+		}),
+		callerIP, order.PaymentMethod, PaymentProviderLDC,
+	)
 	return false, nil
 }
 
