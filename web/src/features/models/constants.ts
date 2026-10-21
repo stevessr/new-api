@@ -189,5 +189,11 @@ export function getSyncSourceOptions(t: TFunction) {
       description: t('Sync from the public upstream metadata repository.'),
       disabled: false,
     },
+    {
+      label: t('models.dev (bundled at build)'),
+      value: 'modelsdev' as SyncSource,
+      description: t('Offline model metadata snapshot generated when packaging.'),
+      disabled: false,
+    },
   ] as const
 }
