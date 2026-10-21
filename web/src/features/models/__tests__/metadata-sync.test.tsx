@@ -91,7 +91,7 @@ describe('metadata sync preview', () => {
     await user.click(
       screen.getByRole('option', { name: 'models.dev (bundled at build)' })
     )
-    expect(screen.getByText('Prices and endpoint settings are not imported.')).toBeVisible()
+    expect(screen.getByText(/Prices and endpoint settings are not imported/)).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Load metadata preview' }))
     await screen.findByText('2026-10-21T00:00:00Z', { exact: false })
     expect(get).toHaveBeenCalledWith(
