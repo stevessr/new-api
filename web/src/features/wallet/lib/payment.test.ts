@@ -33,8 +33,8 @@ describe('payment type classification', () => {
     expect(isWaffoPayment(PAYMENT_TYPES.WAFFO_PANCAKE)).toBe(false)
     expect(isWaffoPancakePayment(PAYMENT_TYPES.WAFFO_PANCAKE)).toBe(true)
     expect(isWaffoPancakePayment(PAYMENT_TYPES.WAFFO)).toBe(false)
-    expect(isStripePayment(PAYMENT_TYPES.STRIPE)).toBe(true)
     expect(isLDCPayment(PAYMENT_TYPES.LDC)).toBe(true)
+    expect(isStripePayment(PAYMENT_TYPES.STRIPE)).toBe(true)
   })
 })
 
