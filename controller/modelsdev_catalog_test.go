@@ -52,7 +52,7 @@ func TestBundledModelsDevCatalogRejectsInvalidData(t *testing.T) {
 		{"empty", []byte(`{"source_url":"https://models.dev/api.json","models":[]}`)},
 		{"invalid json", []byte("garbage")},
 		{"unknown source", []byte(strings.ReplaceAll(string(testModelsDevSnapshot()), "https://models.dev/api.json", "https://unknown.example"))},
-		{"missing vendor", []byte(strings.ReplaceAll(string(testModelsDevSnapshot()), "\"OpenAI\"", "\"missing\""))},
+		{"missing vendor", []byte(strings.Replace(string(testModelsDevSnapshot()), "\"vendor_name\":\"OpenAI\"", "\"vendor_name\":\"missing\"", 1))},
 		{"duplicate", func() []byte {
 			var snapshot modelsDevSnapshot
 			if err := json.Unmarshal(testModelsDevSnapshot(), &snapshot); err != nil { panic(err) }
