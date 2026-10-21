@@ -67,3 +67,12 @@ func TestBundledModelsDevCatalogRejectsInvalidData(t *testing.T) {
 		})
 	}
 }
+
+func TestModelsDevSyncFieldsAreMetadataOnly(t *testing.T) {
+	for _, field := range []string{"description", "tags", "vendor"} {
+		assert.True(t, allowedModelsDevUpdateField(field), field)
+	}
+	for _, field := range []string{"icon", "endpoints", "name_rule", "status", "cost", "pricing", ""} {
+		assert.False(t, allowedModelsDevUpdateField(field), field)
+	}
+}
