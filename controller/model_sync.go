@@ -260,7 +260,8 @@ func fetchMetadataCatalog(c *gin.Context, locale string, sourceName string) (met
 		return metadataSyncSource{}, nil, nil, errors.New("unsupported metadata language")
 	}
 	if sourceName == "modelsdev" {
-		return bundledModelsDevCatalog(resolved, modelsDevSnapshotBytes)
+		// The packaged catalog is English-only regardless of the UI language.
+		return bundledModelsDevCatalog("en", modelsDevSnapshotBytes)
 	}
 	if sourceName != "" && sourceName != "official" {
 		return metadataSyncSource{}, nil, nil, errors.New("unsupported metadata source")
