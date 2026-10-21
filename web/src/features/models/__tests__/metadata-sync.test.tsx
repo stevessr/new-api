@@ -95,7 +95,7 @@ describe('metadata sync preview', () => {
     await user.click(screen.getByRole('button', { name: 'Load metadata preview' }))
     await screen.findByText('2026-10-21T00:00:00Z', { exact: false })
     expect(get).toHaveBeenCalledWith(
-      '/api/models/sync_upstream/preview?locale=zh&source=modelsdev'
+      '/api/models/sync_upstream/preview?locale=en&source=modelsdev'
     )
     client.clear()
   })
