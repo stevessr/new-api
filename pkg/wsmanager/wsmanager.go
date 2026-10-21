@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/go-redis/redis/v8"
 )
 
 const (
@@ -96,7 +97,7 @@ func CloseChannels(channelIDs []int, reason string) int {
 		e.close(reason)
 	}
 	if len(entries) > 0 {
-		common.SysLog(fmt.Sprintf("closed %d active websocket connection(s), channels=%v, kinds=%v, reason=%s", len(entries), entryChannelIDs(entries), entryKindCounts(entries), reason))
+		common.SysLog(common.LogText("closed %d active websocket connection(s), channels=%v, kinds=%v, reason=%s", len(entries), entryChannelIDs(entries), entryKindCounts(entries), reason))
 	}
 	return len(entries)
 }
@@ -104,25 +105,31 @@ func CloseChannels(channelIDs []int, reason string) int {
 func CloseChannelsAndBroadcast(channelIDs []int, reason string) int {
 	count := CloseChannels(channelIDs, reason)
 	if err := PublishCloseChannels(context.Background(), channelIDs, reason); err != nil {
-		common.SysLog(fmt.Sprintf("failed to publish websocket close event: %v", err))
+		common.SysLog(common.LogText("failed to publish websocket close event: %v", err))
 	}
 	return count
 }
 
 func StartSubscriber(ctx context.Context) {
-	if !common.RedisEnabled || common.RDB == nil {
+	rdb := common.RDB
+	if !common.RedisEnabled || rdb == nil {
 		return
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	subscriberOnce.Do(func() {
-		go subscribe(ctx)
+		go func() {
+			pubsub := rdb.Subscribe(ctx, channelCloseTopic(rdb.Options().DB))
+			defer pubsub.Close()
+			receiveChannelCloseEvents(ctx, pubsub.Channel(), getOriginID())
+		}()
 	})
 }
 
 func PublishCloseChannels(ctx context.Context, channelIDs []int, reason string) error {
-	if !common.RedisEnabled || common.RDB == nil {
+	rdb := common.RDB
+	if !common.RedisEnabled || rdb == nil {
 		return nil
 	}
 	ids := uniqueChannelIDs(channelIDs)
@@ -137,14 +144,16 @@ func PublishCloseChannels(ctx context.Context, channelIDs []int, reason string) 
 	if err != nil {
 		return err
 	}
-	return common.RDB.Publish(ctx, redisChannel, payload).Err()
+	return rdb.Publish(ctx, channelCloseTopic(rdb.Options().DB), payload).Err()
 }
 
-func subscribe(ctx context.Context) {
-	pubsub := common.RDB.Subscribe(ctx, redisChannel)
-	defer pubsub.Close()
+func channelCloseTopic(database int) string {
+	// Redis Pub/Sub crosses logical databases, unlike the cache keys. Include
+	// the selected database so independent deployments cannot close each other.
+	return fmt.Sprintf("%s:db:%d", redisChannel, database)
+}
 
-	ch := pubsub.Channel()
+func receiveChannelCloseEvents(ctx context.Context, ch <-chan *redis.Message, origin string) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -155,10 +164,10 @@ func subscribe(ctx context.Context) {
 			}
 			var event closeEvent
 			if err := common.Unmarshal([]byte(msg.Payload), &event); err != nil {
-				common.SysLog(fmt.Sprintf("failed to unmarshal websocket close event: %v", err))
+				common.SysLog(common.LogText("failed to unmarshal websocket close event: %v", err))
 				continue
 			}
-			if event.Origin == getOriginID() {
+			if event.Origin == origin {
 				continue
 			}
 			CloseChannels(event.ChannelIDs, event.Reason)

@@ -99,6 +99,9 @@ func requestLDCOrder(c *gin.Context, req EpayRequest) {
 	}
 
 	id := c.GetInt("id")
+	if rejectInvalidTopUpQuota(c, id, req.Amount) {
+		return
+	}
 	group, err := model.GetUserGroup(id, true)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "获取用户分组失败"})
@@ -127,18 +130,6 @@ func requestLDCOrder(c *gin.Context, req EpayRequest) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "回调地址配置错误"})
 		return
 	}
-	checkoutURL, err := client.CreateOrder(c.Request.Context(), ldc.CreateOrderRequest{
-		ServiceTradeNo: tradeNo,
-		OrderName:      fmt.Sprintf("TUC%d", req.Amount),
-		Amount:         strconv.FormatFloat(payMoney, 'f', 2, 64),
-		NotifyURL:      notifyURL.String(),
-		ReturnURL:      returnURL.String(),
-	})
-	if err != nil {
-		logger.LogError(c.Request.Context(), fmt.Sprintf("LDC 拉起支付失败 user_id=%d trade_no=%s amount=%d error=%q", id, tradeNo, req.Amount, err.Error()))
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "拉起支付失败"})
-		return
-	}
 
 	amount := req.Amount
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
@@ -159,6 +150,20 @@ func requestLDCOrder(c *gin.Context, req EpayRequest) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "创建订单失败"})
 		return
 	}
+	checkoutURL, err := client.CreateOrder(c.Request.Context(), ldc.CreateOrderRequest{
+		ServiceTradeNo: tradeNo,
+		OrderName:      fmt.Sprintf("TUC%d", req.Amount),
+		Amount:         strconv.FormatFloat(payMoney, 'f', 2, 64),
+		NotifyURL:      notifyURL.String(),
+		ReturnURL:      returnURL.String(),
+	})
+	if err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("LDC 拉起支付失败 user_id=%d trade_no=%s amount=%d error=%q", id, tradeNo, req.Amount, err.Error()))
+		_ = model.UpdatePendingTopUpStatus(tradeNo, model.PaymentProviderLDC, common.TopUpStatusFailed)
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "拉起支付失败"})
+		return
+	}
+
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("LDC 充值订单创建成功 user_id=%d trade_no=%s amount=%d money=%.2f url=%q", id, tradeNo, req.Amount, payMoney, checkoutURL))
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{}, "url": checkoutURL})
 }
@@ -231,50 +236,8 @@ func completeLDCOrder(c *gin.Context, notification ldc.Notification, params url.
 		)
 	}
 
-	topUp := model.GetTopUpByTradeNo(notification.ServiceTradeNo)
-	if topUp == nil {
-		return model.ErrTopUpNotFound
-	}
-	if topUp.PaymentProvider != model.PaymentProviderLDC {
-		return model.ErrPaymentMethodMismatch
-	}
-	if !ldcMoneyMatches(topUp.Money, notification.Money) {
-		return errors.New("LDC top-up payment amount mismatch")
-	}
-	if topUp.Status == common.TopUpStatusSuccess {
-		return nil
-	}
-	if topUp.Status != common.TopUpStatusPending {
-		return model.ErrTopUpStatusInvalid
-	}
-
-	quota, clamp := common.QuotaFromDecimalChecked(decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)))
-	if clamp != nil {
-		return errors.New("LDC top-up quota is out of range")
-	}
-	if quota <= 0 {
-		return errors.New("LDC top-up quota is invalid")
-	}
-	if err := model.UpdatePendingTopUpStatus(topUp.TradeNo, model.PaymentProviderLDC, common.TopUpStatusSuccess); err != nil {
-		if errors.Is(err, model.ErrTopUpStatusInvalid) {
-			if current := model.GetTopUpByTradeNo(notification.ServiceTradeNo); current != nil && current.Status == common.TopUpStatusSuccess {
-				return nil
-			}
-		}
-		return err
-	}
-	if err := model.IncreaseUserQuota(topUp.UserId, quota, true); err != nil {
-		return err
-	}
-	logger.LogInfo(c.Request.Context(), fmt.Sprintf("LDC 充值成功 user_id=%d trade_no=%s quota=%d money=%.2f", topUp.UserId, topUp.TradeNo, quota, topUp.Money))
-	model.RecordTopupLog(
-		topUp.UserId,
-		fmt.Sprintf("使用 LDC 充值成功，充值金额: %v，支付金额：%f", logger.LogQuota(quota), topUp.Money),
-		c.ClientIP(),
-		topUp.PaymentMethod,
-		model.PaymentProviderLDC,
-	)
-	return nil
+	_, err := model.RechargeLDC(notification.ServiceTradeNo, notification.Money, c.ClientIP())
+	return err
 }
 
 func ldcMoneyMatches(expected float64, actual string) bool {
