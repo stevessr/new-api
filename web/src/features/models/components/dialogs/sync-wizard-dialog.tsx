@@ -41,13 +41,14 @@ import { handleServerError } from '@/lib/handle-server-error'
 import { createServerError } from '@/lib/server-error-message'
 
 import { previewUpstreamDiff, syncUpstream } from '../../api'
-import { getSyncLocaleOptions } from '../../constants'
+import { getSyncLocaleOptions, getSyncSourceOptions } from '../../constants'
 import type {
   MetadataSyncCandidate,
   MetadataSyncField,
   MetadataSyncPreview,
   MetadataSyncSelection,
   SyncLocale,
+  SyncSource,
 } from '../../types'
 
 const FIELD_LABELS: Record<MetadataSyncField, string> = {
@@ -86,6 +87,7 @@ export function SyncWizardDialog(props: {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [locale, setLocale] = useState<SyncLocale>('zh')
+  const [source, setSource] = useState<SyncSource>('official')
   const [preview, setPreview] = useState<MetadataSyncPreview | null>(null)
   const [scope, setScope] = useState('site')
   const [search, setSearch] = useState('')
@@ -103,7 +105,7 @@ export function SyncWizardDialog(props: {
       setPage(0)
     },
     mutationFn: async () => {
-      const response = await previewUpstreamDiff({ locale })
+      const response = await previewUpstreamDiff({ locale, source })
       if (!response.success || !response.data) {
         throw createServerError(response, t('Failed to preview metadata'))
       }
@@ -119,6 +121,7 @@ export function SyncWizardDialog(props: {
     mutationFn: async (selections: MetadataSyncSelection[]) => {
       if (!preview) throw new Error(t('Preview metadata first'))
       const response = await syncUpstream({
+        source: preview.source.source,
         locale: preview.source.locale,
         source_version: preview.source.version,
         selections,
@@ -400,10 +403,36 @@ export function SyncWizardDialog(props: {
         <div className='space-y-4'>
           <div className='flex flex-wrap items-end gap-3'>
             <div className='space-y-1'>
+              <Label>{t('Metadata source')}</Label>
+              <Select
+                value={source}
+                disabled={busy}
+                items={getSyncSourceOptions(t)}
+                onValueChange={(value) => {
+                  if (value) setSource(value as SyncSource)
+                  setPreview(null)
+                  setSelection({})
+                  setPage(0)
+                  load.reset()
+                }}
+              >
+                <SelectTrigger className='w-56' aria-label={t('Metadata source')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getSyncSourceOptions(t).map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='space-y-1'>
               <Label>{t('Metadata language')}</Label>
               <Select
                 value={locale}
-                disabled={busy}
+                disabled={busy || source === 'modelsdev'}
                 items={getSyncLocaleOptions(t)}
                 onValueChange={(value) => {
                   if (value) setLocale(value as SyncLocale)
@@ -436,6 +465,12 @@ export function SyncWizardDialog(props: {
               {t('Load metadata preview')}
             </Button>
           </div>
+          {source === 'modelsdev' && (
+            <p className='text-muted-foreground text-xs'>
+              {t('Offline model metadata snapshot generated when packaging.')}
+              {' '}{t('Prices and endpoint settings are not imported.')}
+            </p>
+          )}
           {load.isPending && <LoadingState />}
           {load.isError && (
             <ErrorState
@@ -459,6 +494,9 @@ export function SyncWizardDialog(props: {
                 <p>
                   {t('Metadata language')}: {preview.source.locale}
                 </p>
+                {preview.source.generated_at && (
+                  <p>{t('Snapshot date')}: {preview.source.generated_at}</p>
+                )}
               </div>
               <div className='flex flex-wrap gap-3'>
                 <Select
