@@ -5,9 +5,10 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
-      name:
-        description: 'reason'
+      release_tag:
+        description: 'Existing Git tag to build and publish (leave empty for downloadable build artifacts only)'
         required: false
+        type: string
   push:
     tags:
       - '*'
@@ -22,12 +23,21 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
+          ref: ${{ inputs.release_tag != '' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
       - name: Determine Version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -n "$RELEASE_TAG" ]]; then
+            if [[ ! "$RELEASE_TAG" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || ! git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+              echo "::error::release_tag must name an existing tag without '/' or spaces"
+              exit 1
+            fi
+            VERSION="$RELEASE_TAG"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           else
-            VERSION=$(git describe --tags --match 'v[0-9]*')
+            VERSION="manual-$(git rev-parse --short=12 HEAD)"
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -60,10 +70,21 @@ jobs:
       - name: Generate checksums
         run: sha256sum new-api-* > checksums-linux.txt
 
+      - name: Upload manual build artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: new-api-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            new-api-*
+            checksums-linux.txt
+          if-no-files-found: error
+
       - name: Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
         with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
           files: |
             new-api-*
             checksums-linux.txt
@@ -78,12 +99,21 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
+          ref: ${{ inputs.release_tag != '' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
       - name: Determine Version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -n "$RELEASE_TAG" ]]; then
+            if [[ ! "$RELEASE_TAG" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || ! git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+              echo "::error::release_tag must name an existing tag without '/' or spaces"
+              exit 1
+            fi
+            VERSION="$RELEASE_TAG"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           else
-            VERSION=$(git describe --tags --match 'v[0-9]*')
+            VERSION="manual-$(git rev-parse --short=12 HEAD)"
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -112,10 +142,21 @@ jobs:
       - name: Generate checksums
         run: shasum -a 256 new-api-macos-* > checksums-macos.txt
 
+      - name: Upload manual build artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: new-api-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            new-api-macos-*
+            checksums-macos.txt
+          if-no-files-found: error
+
       - name: Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
         with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
           files: |
             new-api-macos-*
             checksums-macos.txt
@@ -133,12 +174,21 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
+          ref: ${{ inputs.release_tag != '' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
       - name: Determine Version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -n "$RELEASE_TAG" ]]; then
+            if [[ ! "$RELEASE_TAG" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || ! git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+              echo "::error::release_tag must name an existing tag without '/' or spaces"
+              exit 1
+            fi
+            VERSION="$RELEASE_TAG"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           else
-            VERSION=$(git describe --tags --match 'v[0-9]*')
+            VERSION="manual-$(git rev-parse --short=12 HEAD)"
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -166,10 +216,21 @@ jobs:
       - name: Generate checksums
         run: sha256sum new-api-*.exe > checksums-windows.txt
 
+      - name: Upload manual build artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: new-api-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            new-api-*.exe
+            checksums-windows.txt
+          if-no-files-found: error
+
       - name: Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
         with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
           files: |
             new-api-*.exe
             checksums-windows.txt
